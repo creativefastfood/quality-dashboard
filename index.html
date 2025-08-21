@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Система управления качеством</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+</head>
+<body>
+  <!-- Главная страница -->
+  <div id="home-page" class="page active">
+    <h1>Система управления качеством</h1>
+    <button onclick="showPage('admin')">Админ панель</button>
+    <button onclick="showPage('dashboard')">Дашборд</button>
+    <p id="firebase-status">Подключение к Firebase...</p>
+  </div>
+
+  <!-- Админ панель -->
+  <div id="admin-page" class="page">
+    <button onclick="showPage('home')">← Главная</button>
+    <h2>Админ панель</h2>
+    <p id="admin-firebase-status">Firebase статус...</p>
+    <!-- Здесь исходный HTML из admin-panel-smart-3.html -->
+    <!-- Например: файлы, таблицы, кнопки "Добавить запись", "Очистить" -->
+    <div id="manual-panel"></div>
+  </div>
+
+  <!-- Дашборд -->
+  <div id="dashboard-page" class="page">
+    <button onclick="showPage('home')">← Главная</button>
+    <h2>Дашборд</h2>
+    <p id="dashboard-firebase-status">Firebase статус...</p>
+    <!-- Здесь исходный HTML из dashboard-op.html -->
+    <canvas id="chartLeaders"></canvas>
+    <canvas id="chartCategories"></canvas>
+    <canvas id="chartTrend"></canvas>
+    <table id="tblWeak"></table>
+    <table id="tblDetail"></table>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

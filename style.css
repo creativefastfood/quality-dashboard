@@ -1,0 +1,48 @@
+body {
+  margin: 0;
+  font-family: Inter, sans-serif;
+}
+.page {
+  display: none;
+  padding: 20px;
+}
+.page.active {
+  display: block;
+}
+button {
+  margin: 5px;
+  padding: 8px 12px;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button:hover {
+  background: #1e4bb8;
+}
+/* Светлая тема для админки */
+#admin-page {
+  background: #f6f8fb;
+  color: #0f172a;
+}
+/* Темная тема для дашборда */
+#dashboard-page {
+  background: #0b0d10;
+  color: #e6ebf0;
+}
+/* Таблицы */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+th, td {
+  padding: 8px;
+  border: 1px solid #444;
+}
+/* Канвасы */
+canvas {
+  max-width: 100%;
+  margin-top: 20px;
+}
