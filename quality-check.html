@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проверочная панель</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #007AFF;
+            color: white;
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .form-container {
+            padding: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+
+        .form-row input[type="date"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-row select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            min-width: 200px;
+            font-size: 14px;
+        }
+
+        .indicators-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .indicator-row {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto auto auto auto;
+            gap: 15px;
+            align-items: center;
+            padding: 12px;
+            background: #fafafa;
+            border-radius: 6px;
+            border-left: 4px solid #007AFF;
+            font-size: 14px;
+        }
+
+        .indicator-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: #007AFF;
+        }
+
+        .indicator-text {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .indicator-field {
+            width: 100px;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .indicator-field:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+        }
+
+        .copy-link {
+            background: #f0f0f0;
+            border: none;
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .copy-link:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            min-width: 150px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #007AFF;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #FF3B30;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+            transform: translateY(-1px);
+        }
+
+        .results-table {
+            margin-top: 30px;
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+        }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .score-high { color: #28a745; font-weight: 600; }
+        .score-medium { color: #ffc107; font-weight: 600; }
+        .score-low { color: #dc3545; font-weight: 600; }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success { background: #28a745; }
+        .notification.error { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            Проверочная панель (ручной ввод в прослойку)
+        </div>
+        
+        <div class="form-container">
+            <div class="form-row">
+                <input type="date" id="check-date" />
+                <select id="manager-select">
+                    <option value="">Менеджер</option>
+                    <option value="Иван Петров">Иван Петров</option>
+                    <option value="Мария Сидорова">Мария Сидорова</option>
+                    <option value="Алексей Козлов">Алексей Козлов</option>
+                    <option value="Елена Романова">Елена Романова</option>
+                </select>
+                <select id="department-select">
+                    <option value="op">ОП</option>
+                    <option value="prod">Продакшн</option>
+                </select>
+                <select id="month-select">
+                    <option value="">Апрель</option>
+                    <option value="Январь">Январь</option>
+                    <option value="Февраль">Февраль</option>
+                    <option value="Март">Март</option>
+                    <option value="Апрель">Апрель</option>
+                    <option value="Май">Май</option>
+                    <option value="Июнь">Июнь</option>
+                    <option value="Июль">Июль</option>
+                    <option value="Август">Август</option>
+                </select>
+            </div>
+
+            <div class="indicators-grid" id="indicators-container">
+                <!-- Indicators will be loaded here -->
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="addRecord()">Добавить запись</button>
+                <button class="btn btn-danger" onclick="clearForm()">Очистить ручные записи</button>
+            </div>
+
+            <div class="results-table">
+                <div class="table-title">История проверок</div>
+                <table id="results-table">
+                    <thead>
+                        <tr>
+                            <th>Дата</th>
+                            <th>Менеджер</th>
+                            <th>Отдел</th>
+                            <th>Показатель</th>
+                            <th>Балл</th>
+                            <th>Ссылка</th>
+                            <th>Комментарий</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Показатели для ОП
+        const OP_INDICATORS = [
+            'Работа с КЭВ',
+            'Сроки',
+            'Общение с клиентом',
+            'Правильность заполнения CRM'
+        ];
+
+        // Показатели для Продакшн
+        const PROD_INDICATORS = [
+            'Актуальность стадии проекта по канбану',
+            'Верно добавлены все исполнители в сделку',
+            'Заполнены все обязательные поля в Битрикс',
+            'ТЗ прикреплено в сделку файлом в Битрикс',
+            'В сделке есть предоплата',
+            'Наличие мертвых линий/дубляж ненужных линий',
+            'Ответ в чате в течение 45-ти минут в линии с клиентом',
+            'Поздоровался при первом касании',
+            'Доброжелательность',
+            'Использованы запретные слова в диалоге',
+            'Сообщил что 1 пакет правок далее платно',
+            'Сообщил 2 месяца облачного хранения файлов',
+            'Работа с ТЗ, точное подтверждение от клиента',
+            'Обьяснил используемый термин из словаря',
+            'Сделаны 3 предупреждения о заборе товаров',
+            'Хранение товаров 5+25 рабочих дней',
+            'Отослан номер заказа для забора',
+            'Направлена памятка по забору',
+            'Попросили оставить отзыв',
+            'Оставленные линии без ответа в конце рабочего дня',
+            'Звонок с клиентом зарезюмирован'
+        ];
+
+        let currentData = [];
+
+        function initForm() {
+            // Устанавливаем текущую дату
+            document.getElementById('check-date').value = new Date().toISOString().split('T')[0];
+            
+            // Загружаем показатели для ОП по умолчанию
+            loadIndicators('op');
+            
+            // Загружаем данные из localStorage
+            loadData();
+            
+            // Обновляем таблицу
+            updateTable();
+
+            // Обработчик изменения отдела
+            document.getElementById('department-select').addEventListener('change', function() {
+                loadIndicators(this.value);
+            });
+        }
+
+        function loadIndicators(department) {
+            const container = document.getElementById('indicators-container');
+            const indicators = department === 'op' ? OP_INDICATORS : PROD_INDICATORS;
+            
+            container.innerHTML = indicators.map((indicator, index) => `
+                <div class="indicator-row">
+                    <input type="checkbox" class="indicator-checkbox" id="check-${index}">
+                    <div class="indicator-text">${indicator}</div>
+                    <input type="text" class="indicator-field" placeholder="ссылка" id="link-${index}">
+                    <input type="text" class="indicator-field" placeholder="комментарий" id="comment-${index}">
+                    <input type="text" class="indicator-field" placeholder="ID сделки" id="deal-${index}">
+                    <button class="copy-link" onclick="copyLink(${index})">Скопировать ссылку</button>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn btn-primary" style="padding: 4px 8px; font-size: 12px;" onclick="addSingle(${index})">Добавить</button>
+                        <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="removeSingle(${index})">Очистить</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addRecord() {
+            const date = document.getElementById('check-date').value;
+            const manager = document.getElementById('manager-select').value;
+            const department = document.getElementById('department-select').value;
+            const month = document.getElementById('month-select').value;
+
+            if (!date || !manager || !department) {
+                showNotification('Заполните дату, менеджера и отдел', 'error');
+                return;
+            }
+
+            const indicators = document.querySelectorAll('.indicator-row');
+            let addedCount = 0;
+
+            indicators.forEach((row, index) => {
+                const checkbox = document.getElementById(`check-${index}`);
+                if (checkbox.checked) {
+                    const indicatorText = row.querySelector('.indicator-text').textContent;
+                    const link = document.getElementById(`link-${index}`).value;
+                    const comment = document.getElementById(`comment-${index}`).value;
+                    const dealId = document.getElementById(`deal-${index}`).value;
+
+                    const record = {
+                        id: Date.now() + index,
+                        date: date,
+                        manager: manager,
+                        department: department === 'op' ? 'ОП' : 'Продакшн',
+                        indicator: indicatorText,
+                        score: 100, // Проверка пройдена
+                        link: link,
+                        comment: comment,
+                        dealId: dealId,
+                        month: month || new Date().toLocaleDateString('ru-RU', { month: 'long' }),
+                        timestamp: Date.now()
+                    };
+
+                    currentData.unshift(record);
+                    addedCount++;
+                }
+            });
+
+            if (addedCount > 0) {
+                saveData();
+                updateTable();
+                showNotification(`Добавлено ${addedCount} записей`, 'success');
+                clearCheckedItems();
+            } else {
+                showNotification('Выберите хотя бы один показатель', 'error');
+            }
+        }
+
+        function addSingle(index) {
+            const date = document.getElementById('check-date').value;
+            const manager = document.getElementById('manager-select').value;
+            const department = document.getElementById('department-select').value;
+            const month = document.getElementById('month-select').value;
+
+            if (!date || !manager || !department) {
+                showNotification('Заполните дату, менеджера и отдел', 'error');
+                return;
+            }
+
+            const indicatorText = document.querySelector(`#indicators-container .indicator-row:nth-child(${index + 1}) .indicator-text`).textContent;
+            const link = document.getElementById(`link-${index}`).value;
+            const comment = document.getElementById(`comment-${index}`).value;
+            const dealId = document.getElementById(`deal-${index}`).value;
+
+            const record = {
+                id: Date.now() + index,
+                date: date,
+                manager: manager,
+                department: department === 'op' ? 'ОП' : 'Продакшн',
+                indicator: indicatorText,
+                score: 100,
+                link: link,
+                comment: comment,
+                dealId: dealId,
+                month: month || new Date().toLocaleDateString('ru-RU', { month: 'long' }),
+                timestamp: Date.now()
+            };
+
+            currentData.unshift(record);
+            saveData();
+            updateTable();
+            showNotification('Запись добавлена', 'success');
+            
+            // Очищаем поля для этого показателя
+            document.getElementById(`link-${index}`).value = '';
+            document.getElementById(`comment-${index}`).value = '';
+            document.getElementById(`deal-${index}`).value = '';
+            document.getElementById(`check-${index}`).checked = false;
+        }
+
+        function removeSingle(index) {
+            document.getElementById(`link-${index}`).value = '';
+            document.getElementById(`comment-${index}`).value = '';
+            document.getElementById(`deal-${index}`).value = '';
+            document.getElementById(`check-${index}`).checked = false;
+        }
+
+        function copyLink(index) {
+            const link = document.getElementById(`link-${index}`).value;
+            if (link) {
+                navigator.clipboard.writeText(link).then(() => {
+                    showNotification('Ссылка скопирована', 'success');
+                });
+            }
+        }
+
+        function clearForm() {
+            if (confirm('Очистить все ручные записи? Это действие необратимо!')) {
+                currentData = [];
+                saveData();
+                updateTable();
+                clearCheckedItems();
+                showNotification('Все записи очищены', 'success');
+            }
+        }
+
+        function clearCheckedItems() {
+            document.querySelectorAll('.indicator-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.querySelectorAll('.indicator-field').forEach(field => {
+                field.value = '';
+            });
+        }
+
+        function updateTable() {
+            const tbody = document.querySelector('#results-table tbody');
+            tbody.innerHTML = currentData.slice(0, 100).map(record => `
+                <tr>
+                    <td>${record.date}</td>
+                    <td>${record.manager}</td>
+                    <td>${record.department}</td>
+                    <td>${record.indicator}</td>
+                    <td class="score-high">${record.score}%</td>
+                    <td>${record.link ? `<a href="${record.link}" target="_blank">🔗</a>` : ''}</td>
+                    <td>${record.comment || ''}</td>
+                </tr>
+            `).join('');
+        }
+
+        function saveData() {
+            localStorage.setItem('qualityCheckData', JSON.stringify(currentData));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('qualityCheckData');
+            currentData = saved ? JSON.parse(saved) : [];
+        }
+
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', initForm);
+    </script>
+</body>
+</html>
