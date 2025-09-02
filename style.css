@@ -105,9 +105,9 @@ body {
 
 .main-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-lg);
-    max-width: 1000px;
+    max-width: 800px;
     margin: 0 auto;
 }
 
@@ -749,5 +749,300 @@ tr:hover {
     
     .tile-icon {
         font-size: 2rem;
+    }
+}
+
+/* КАЧЕСТВЕННЫЕ ПРОВЕРОЧНЫЕ ФОРМЫ */
+.quality-check-form {
+    background: var(--light-card);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--light-border);
+}
+
+.quality-form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.quality-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.quality-field label {
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    color: var(--light-text);
+}
+
+.quality-field input,
+.quality-field select,
+.quality-field textarea {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--light-border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    transition: var(--transition-fast);
+}
+
+.quality-field input:focus,
+.quality-field select:focus,
+.quality-field textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* DRAG AND DROP ДЛЯ СКРИНШОТОВ */
+.screenshot-field {
+    min-width: 300px;
+}
+
+.screenshot-upload {
+    margin-top: var(--spacing-xs);
+}
+
+.drop-zone {
+    border: 2px dashed var(--light-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    position: relative;
+}
+
+.drop-zone:hover,
+.drop-zone.drag-over {
+    border-color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.drop-zone p {
+    color: var(--light-text-muted);
+    margin: 0;
+    font-size: 14px;
+}
+
+.screenshot-preview {
+    position: relative;
+    display: inline-block;
+    margin-top: var(--spacing-sm);
+}
+
+.screenshot-preview img {
+    max-width: 200px;
+    max-height: 150px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--light-border);
+}
+
+.remove-screenshot {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    transition: var(--transition-fast);
+}
+
+.remove-screenshot:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+/* ИНДИКАТОРЫ КАЧЕСТВА */
+.quality-indicators {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--light-border);
+}
+
+.quality-indicators h4 {
+    margin-bottom: var(--spacing-md);
+    color: var(--light-text);
+    font-size: 16px;
+}
+
+.indicators-grid {
+    display: grid;
+    gap: var(--spacing-md);
+}
+
+.indicators-grid:not(.indicators-grid-vertical) {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.indicators-grid-vertical {
+    grid-template-columns: 1fr;
+}
+
+.indicator-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm);
+    background: var(--light-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--light-border);
+    gap: var(--spacing-sm);
+}
+
+.indicator-item label {
+    flex: 1;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.indicator-buttons {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.indicator-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--light-border);
+    border-radius: var(--radius-sm);
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    transition: var(--transition-fast);
+}
+
+.indicator-btn:hover {
+    transform: scale(1.05);
+}
+
+.indicator-btn.good {
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.indicator-btn.good.active {
+    background: var(--accent-color);
+    color: white;
+}
+
+.indicator-btn.bad {
+    color: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+.indicator-btn.bad.active {
+    background: var(--danger-color);
+    color: white;
+}
+
+.indicator-btn.clear {
+    color: var(--secondary-color);
+    border-color: var(--secondary-color);
+    font-size: 10px;
+}
+
+.indicator-btn.clear:hover {
+    background: var(--secondary-color);
+    color: white;
+}
+
+/* ДЕЙСТВИЯ С ФОРМОЙ */
+.quality-actions {
+    margin-top: var(--spacing-lg);
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+}
+
+/* РЕЗУЛЬТАТЫ ПРОВЕРОК */
+#op-quality-results,
+#prod-quality-results {
+    width: 100%;
+    margin-top: var(--spacing-md);
+}
+
+#op-quality-results th,
+#op-quality-results td,
+#prod-quality-results th,
+#prod-quality-results td {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    text-align: left;
+    border-bottom: 1px solid var(--light-border);
+    font-size: 13px;
+}
+
+#op-quality-results th,
+#prod-quality-results th {
+    background: var(--light-surface);
+    font-weight: 600;
+    color: var(--light-text);
+}
+
+.quality-indicator-badge {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+}
+
+.quality-indicator-badge.good {
+    background: var(--accent-color);
+}
+
+.quality-indicator-badge.bad {
+    background: var(--danger-color);
+}
+
+.quality-indicator-badge.empty {
+    background: var(--secondary-color);
+    opacity: 0.3;
+}
+
+/* Адаптивность для качественных форм */
+@media (max-width: 768px) {
+    .quality-form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .indicators-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .indicator-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+    
+    .quality-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .screenshot-field {
+        min-width: auto;
     }
 }

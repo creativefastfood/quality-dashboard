@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система управления качеством</title>
-    <link rel="stylesheet" href="style.css?v=2025090201">
+    <link rel="stylesheet" href="style.css?v=2025090202">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="app.js?v=2025090201" defer></script>
+    <script src="app.js?v=2025090202" defer></script>
 </head>
 <body>
     <!-- ГЛАВНАЯ СТРАНИЦА -->
@@ -17,12 +17,7 @@
                 <p>Мониторинг эффективности отделов ОП и Продакшн</p>
             </header>
             
-            <div class="main-grid">
-                <div class="tile quality-check" onclick="window.open('quality-check.html', '_blank')">
-                    <div class="tile-icon">🔍</div>
-                    <h3>Проверочная панель</h3>
-                    <p>Ручной ввод результатов проверок</p>
-                </div>
+            <div class="main-grid main-grid-4">
                 
                 <div class="tile op-admin" onclick="showPage('op-admin')">
                     <div class="tile-icon">⚙️</div>
@@ -60,44 +55,133 @@
             </header>
 
             <div class="admin-content">
-                <!-- Проверочная панель -->
+                <!-- Проверочная панель ОП -->
                 <div class="card">
-                    <h3>📝 Ручной ввод оценок</h3>
-                    <form id="op-manual-form" class="manual-form">
-                        <div class="form-row">
-                            <select id="op-manager" required>
-                                <option value="">Выберите сотрудника</option>
-                                <option value="Иван Петров">Иван Петров</option>
-                                <option value="Мария Сидорова">Мария Сидорова</option>
-                                <option value="Алексей Козлов">Алексей Козлов</option>
-                                <option value="Елена Романова">Елена Романова</option>
-                            </select>
+                    <h3>🔍 Проверочная панель ОП</h3>
+                    <form id="op-quality-form" class="quality-check-form">
+                        <div class="quality-form-row">
+                            <div class="quality-field">
+                                <label>Дата:</label>
+                                <input type="date" id="op-check-date" required>
+                            </div>
                             
-                            <select id="op-indicator" required>
-                                <option value="">Выберите показатель</option>
-                                <option value="Качество презентации">Качество презентации</option>
-                                <option value="Работа с возражениями">Работа с возражениями</option>
-                                <option value="Закрытие сделки">Закрытие сделки</option>
-                                <option value="Клиентский сервис">Клиентский сервис</option>
-                            </select>
+                            <div class="quality-field">
+                                <label>Менеджер:</label>
+                                <select id="op-check-manager" required>
+                                    <option value="">Выберите менеджера</option>
+                                    <option value="Иван Петров">Иван Петров</option>
+                                    <option value="Мария Сидорова">Мария Сидорова</option>
+                                    <option value="Алексей Козлов">Алексей Козлов</option>
+                                    <option value="Елена Романова">Елена Романова</option>
+                                </select>
+                            </div>
                             
-                            <input type="number" id="op-value" placeholder="Оценка (0-100)" min="0" max="100" required>
+                            <div class="quality-field">
+                                <label>Ссылка на сделку:</label>
+                                <input type="url" id="op-deal-link" placeholder="https://...">
+                            </div>
+                        </div>
+                        
+                        <div class="quality-form-row">
+                            <div class="quality-field">
+                                <label>Комментарий:</label>
+                                <textarea id="op-comment" placeholder="Комментарий к проверке" rows="2"></textarea>
+                            </div>
                             
-                            <select id="op-month" required>
-                                <option value="">Месяц</option>
-                                <option value="Январь">Январь</option>
-                                <option value="Февраль">Февраль</option>
-                                <option value="Март">Март</option>
-                                <option value="Апрель">Апрель</option>
-                                <option value="Май">Май</option>
-                                <option value="Июнь">Июнь</option>
-                                <option value="Июль">Июль</option>
-                                <option value="Август">Август</option>
-                            </select>
-                            
-                            <button type="submit" class="btn-primary">Добавить</button>
+                            <div class="quality-field">
+                                <label>ID сделки:</label>
+                                <input type="text" id="op-deal-id" placeholder="ID сделки">
+                            </div>
+                        </div>
+                        
+                        <div class="quality-form-row">
+                            <div class="quality-field screenshot-field">
+                                <label>Скриншот:</label>
+                                <div class="screenshot-upload" id="op-screenshot-drop">
+                                    <div class="drop-zone">
+                                        <p>📁 Перетащите скриншот сюда или нажмите для выбора</p>
+                                        <input type="file" id="op-screenshot-input" accept="image/*" style="display: none;">
+                                        <div class="screenshot-preview" id="op-screenshot-preview" style="display: none;">
+                                            <img id="op-screenshot-img" src="" alt="Превью">
+                                            <button type="button" class="remove-screenshot" onclick="removeScreenshot('op')">✕</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="quality-indicators">
+                            <h4>Показатели ОП:</h4>
+                            <div class="indicators-grid">
+                                <div class="indicator-item">
+                                    <label>Работа с КЭВ:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('op', 'kev', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('op', 'kev', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('op', 'kev')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="op-kev" name="kev">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Сроки:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('op', 'deadlines', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('op', 'deadlines', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('op', 'deadlines')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="op-deadlines" name="deadlines">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Общение с клиентом:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('op', 'communication', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('op', 'communication', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('op', 'communication')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="op-communication" name="communication">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Правильность заполнения CRM:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('op', 'crm', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('op', 'crm', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('op', 'crm')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="op-crm" name="crm">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="quality-actions">
+                            <button type="submit" class="btn-primary">💾 Сохранить проверку</button>
+                            <button type="button" class="btn-secondary" onclick="clearQualityForm('op')">🗑️ Очистить форму</button>
                         </div>
                     </form>
+                </div>
+                
+                <!-- Результаты проверок ОП -->
+                <div class="card">
+                    <h3>📋 Результаты проверок</h3>
+                    <div class="table-container">
+                        <table id="op-quality-results">
+                            <thead>
+                                <tr>
+                                    <th>Дата</th>
+                                    <th>Менеджер</th>
+                                    <th>КЭВ</th>
+                                    <th>Сроки</th>
+                                    <th>Общение</th>
+                                    <th>CRM</th>
+                                    <th>Комментарий</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- Загрузка CSV -->
@@ -239,51 +323,175 @@
             </header>
 
             <div class="admin-content">
-                <!-- Проверочная панель -->
+                <!-- Проверочная панель Продакшн -->
                 <div class="card">
-                    <h3>📝 Ручной ввод оценок</h3>
-                    <form id="prod-manual-form" class="manual-form">
-                        <div class="form-row">
-                            <select id="prod-manager" required>
-                                <option value="">Выберите специалиста</option>
-                                <option value="Анна Астапенкова">Анна Астапенкова</option>
-                                <option value="Азиза Кадырова">Азиза Кадырова</option>
-                                <option value="Рената Галиулина">Рената Галиулина</option>
-                                <option value="София Кондратьева">София Кондратьева</option>
-                            </select>
+                    <h3>🔍 Проверочная панель Продакшн</h3>
+                    <form id="prod-quality-form" class="quality-check-form">
+                        <div class="quality-form-row">
+                            <div class="quality-field">
+                                <label>Дата:</label>
+                                <input type="date" id="prod-check-date" required>
+                            </div>
                             
-                            <select id="prod-category" required>
-                                <option value="">Выберите роль</option>
-                                <option value="Координация">Координация</option>
-                                <option value="Продюсеры">Продюсеры</option>
-                            </select>
+                            <div class="quality-field">
+                                <label>Специалист:</label>
+                                <select id="prod-check-manager" required>
+                                    <option value="">Выберите специалиста</option>
+                                    <option value="Анна Астапенкова">Анна Астапенкова</option>
+                                    <option value="Азиза Кадырова">Азиза Кадырова</option>
+                                    <option value="Рената Галиулина">Рената Галиулина</option>
+                                    <option value="София Кондратьева">София Кондратьева</option>
+                                </select>
+                            </div>
                             
-                            <select id="prod-indicator" required>
-                                <option value="">Выберите показатель</option>
-                                <option value="Актуальность стадии проекта по канбану">Актуальность стадии проекта</option>
-                                <option value="Верно добавлены все исполнители в сделку">Исполнители в сделке</option>
-                                <option value="Заполнены все обязательные поля в Битрикс">Обязательные поля</option>
-                                <option value="ТЗ прикреплено в сделку файлом в Битрикс">ТЗ прикреплено</option>
-                                <option value="В сделке есть предоплата">Предоплата</option>
-                            </select>
+                            <div class="quality-field">
+                                <label>Отдел:</label>
+                                <select id="prod-department" required>
+                                    <option value="">Выберите отдел</option>
+                                    <option value="ОП">ОП</option>
+                                    <option value="Продакшн">Продакшн</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="quality-form-row">
+                            <div class="quality-field">
+                                <label>Ссылка на сделку:</label>
+                                <input type="url" id="prod-deal-link" placeholder="https://...">
+                            </div>
                             
-                            <input type="number" id="prod-value" placeholder="Оценка (0-100)" min="0" max="100" required>
+                            <div class="quality-field">
+                                <label>ID сделки:</label>
+                                <input type="text" id="prod-deal-id" placeholder="ID сделки">
+                            </div>
+                        </div>
+                        
+                        <div class="quality-form-row">
+                            <div class="quality-field">
+                                <label>Комментарий:</label>
+                                <textarea id="prod-comment" placeholder="Комментарий к проверке" rows="2"></textarea>
+                            </div>
                             
-                            <select id="prod-month" required>
-                                <option value="">Месяц</option>
-                                <option value="Январь">Январь</option>
-                                <option value="Февраль">Февраль</option>
-                                <option value="Март">Март</option>
-                                <option value="Апрель">Апрель</option>
-                                <option value="Май">Май</option>
-                                <option value="Июнь">Июнь</option>
-                                <option value="Июль">Июль</option>
-                                <option value="Август">Август</option>
-                            </select>
-                            
-                            <button type="submit" class="btn-primary">Добавить</button>
+                            <div class="quality-field screenshot-field">
+                                <label>Скриншот:</label>
+                                <div class="screenshot-upload" id="prod-screenshot-drop">
+                                    <div class="drop-zone">
+                                        <p>📁 Перетащите скриншот сюда или нажмите для выбора</p>
+                                        <input type="file" id="prod-screenshot-input" accept="image/*" style="display: none;">
+                                        <div class="screenshot-preview" id="prod-screenshot-preview" style="display: none;">
+                                            <img id="prod-screenshot-img" src="" alt="Превью">
+                                            <button type="button" class="remove-screenshot" onclick="removeScreenshot('prod')">✕</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="quality-indicators">
+                            <h4>Показатели Продакшн:</h4>
+                            <div class="indicators-grid indicators-grid-vertical">
+                                <div class="indicator-item">
+                                    <label>Актуальность стадии проекта по канбану:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'stage', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'stage', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'stage')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-stage" name="stage">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>ТЗ прикреплено в сделку файлом в Битрикс:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'tz', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'tz', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'tz')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-tz" name="tz">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Все исполнители добавлены в сделку:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'executors', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'executors', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'executors')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-executors" name="executors">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Комментарии в сделке о прохождении этапов:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'comments', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'comments', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'comments')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-comments" name="comments">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>По сделке видно, что она находится в работе:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'inwork', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'inwork', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'inwork')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-inwork" name="inwork">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Заполнены все обязательные поля в Битрикс:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'fields', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'fields', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'fields')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-fields" name="fields">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>В сделке есть предоплата:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'prepayment', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'prepayment', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'prepayment')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-prepayment" name="prepayment">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="quality-actions">
+                            <button type="submit" class="btn-primary">💾 Сохранить проверку</button>
+                            <button type="button" class="btn-secondary" onclick="clearQualityForm('prod')">🗑️ Очистить форму</button>
                         </div>
                     </form>
+                </div>
+                
+                <!-- Результаты проверок Продакшн -->
+                <div class="card">
+                    <h3>📋 Результаты проверок</h3>
+                    <div class="table-container">
+                        <table id="prod-quality-results">
+                            <thead>
+                                <tr>
+                                    <th>Дата</th>
+                                    <th>Специалист</th>
+                                    <th>Отдел</th>
+                                    <th>Стадия</th>
+                                    <th>ТЗ</th>
+                                    <th>Исполнители</th>
+                                    <th>Комментарии</th>
+                                    <th>В работе</th>
+                                    <th>Поля</th>
+                                    <th>Предоплата</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- Загрузка CSV -->

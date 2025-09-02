@@ -1177,9 +1177,330 @@ document.addEventListener('DOMContentLoaded', function() {
         DataManager.saveProdData(DataManager.generateTestProdData());
     }
     
+    // Инициализация проверочных панелей
+    initQualityPanels();
+    
     console.log('🎯 Система управления качеством готова к работе!');
     showNotification('🚀 Система успешно инициализирована!');
 });
+
+// =====================================================
+// КАЧЕСТВЕННЫЕ ПРОВЕРОЧНЫЕ ПАНЕЛИ
+// =====================================================
+
+// Инициализация проверочных панелей
+function initQualityPanels() {
+    console.log('🔍 Инициализация проверочных панелей...');
+    
+    // Инициализация ОП панели
+    const opForm = document.getElementById('op-quality-form');
+    if (opForm) {
+        opForm.addEventListener('submit', (e) => handleQualityFormSubmit('op', e));
+        initScreenshotUpload('op');
+        renderQualityResults('op');
+        
+        // Установка сегодняшней даты по умолчанию
+        const dateInput = document.getElementById('op-check-date');
+        if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    // Инициализация Продакшн панели
+    const prodForm = document.getElementById('prod-quality-form');
+    if (prodForm) {
+        prodForm.addEventListener('submit', (e) => handleQualityFormSubmit('prod', e));
+        initScreenshotUpload('prod');
+        renderQualityResults('prod');
+        
+        // Установка сегодняшней даты по умолчанию
+        const dateInput = document.getElementById('prod-check-date');
+        if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    console.log('✅ Проверочные панели инициализированы');
+}
+
+// Функции для работы с индикаторами
+window.setIndicator = function(department, indicator, value) {
+    const input = document.getElementById(`${department}-${indicator}`);
+    const buttons = document.querySelectorAll(`[onclick*="setIndicator('${department}', '${indicator}',"]`);
+    
+    // Сброс всех кнопок для этого индикатора
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Активируем выбранную кнопку
+    const activeBtn = Array.from(buttons).find(btn => btn.onclick.toString().includes(`'${value}'`));
+    if (activeBtn) activeBtn.classList.add('active');
+    
+    // Устанавливаем значение
+    if (input) input.value = value;
+    
+    console.log(`Индикатор ${department}.${indicator} = ${value}`);
+};
+
+window.clearIndicator = function(department, indicator) {
+    const input = document.getElementById(`${department}-${indicator}`);
+    const buttons = document.querySelectorAll(`[onclick*="setIndicator('${department}', '${indicator}',"]`);
+    
+    // Сброс всех кнопок
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Очищаем значение
+    if (input) input.value = '';
+    
+    console.log(`Индикатор ${department}.${indicator} очищен`);
+};
+
+window.clearQualityForm = function(department) {
+    const form = document.getElementById(`${department}-quality-form`);
+    if (!form) return;
+    
+    // Очищаем все поля формы
+    form.reset();
+    
+    // Очищаем все индикаторы
+    const buttons = form.querySelectorAll('.indicator-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Очищаем скриншот
+    removeScreenshot(department);
+    
+    showNotification('🧹 Форма очищена');
+};
+
+// Drag & Drop для скриншотов
+window.initScreenshotUpload = function(department) {
+    const dropZone = document.getElementById(`${department}-screenshot-drop`);
+    const fileInput = document.getElementById(`${department}-screenshot-input`);
+    const preview = document.getElementById(`${department}-screenshot-preview`);
+    const img = document.getElementById(`${department}-screenshot-img`);
+    
+    if (!dropZone || !fileInput) return;
+    
+    // Клик по зоне открывает файловый диалог
+    dropZone.addEventListener('click', () => fileInput.click());
+    
+    // Drag & Drop события
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleScreenshotFile(files[0], department);
+        }
+    });
+    
+    // Обработка выбора файла
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleScreenshotFile(e.target.files[0], department);
+        }
+    });
+};
+
+function handleScreenshotFile(file, department) {
+    if (!file.type.startsWith('image/')) {
+        showNotification('❌ Можно загружать только изображения', 'error');
+        return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) { // 5MB
+        showNotification('❌ Размер файла не должен превышать 5MB', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const preview = document.getElementById(`${department}-screenshot-preview`);
+        const img = document.getElementById(`${department}-screenshot-img`);
+        const dropZone = document.querySelector(`#${department}-screenshot-drop .drop-zone`);
+        
+        if (img && preview) {
+            img.src = e.target.result;
+            preview.style.display = 'inline-block';
+            
+            // Скрываем текст загрузки
+            const p = dropZone.querySelector('p');
+            if (p) p.style.display = 'none';
+        }
+    };
+    reader.readAsDataURL(file);
+    
+    showNotification('📸 Скриншот загружен');
+}
+
+window.removeScreenshot = function(department) {
+    const preview = document.getElementById(`${department}-screenshot-preview`);
+    const img = document.getElementById(`${department}-screenshot-img`);
+    const fileInput = document.getElementById(`${department}-screenshot-input`);
+    const dropZone = document.querySelector(`#${department}-screenshot-drop .drop-zone`);
+    
+    if (preview) preview.style.display = 'none';
+    if (img) img.src = '';
+    if (fileInput) fileInput.value = '';
+    
+    // Показываем текст загрузки
+    const p = dropZone?.querySelector('p');
+    if (p) p.style.display = 'block';
+    
+    showNotification('🗑️ Скриншот удален');
+};
+
+// Обработчики форм качественных проверок
+function handleQualityFormSubmit(department, e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = {};
+    
+    // Собираем данные формы
+    for (let [key, value] of formData.entries()) {
+        data[key] = value;
+    }
+    
+    // Собираем данные индикаторов
+    const indicators = {};
+    const indicatorInputs = e.target.querySelectorAll('input[type="hidden"][name]');
+    indicatorInputs.forEach(input => {
+        if (input.value) {
+            indicators[input.name] = input.value;
+        }
+    });
+    
+    // Получаем скриншот
+    const img = document.getElementById(`${department}-screenshot-img`);
+    const screenshot = img && img.src.startsWith('data:') ? img.src : null;
+    
+    // Создаем запись
+    const record = {
+        id: Date.now(),
+        date: data.date || new Date().toISOString().split('T')[0],
+        manager: data.manager,
+        department: department.toUpperCase(),
+        dealLink: data.dealLink || '',
+        dealId: data.dealId || '',
+        comment: data.comment || '',
+        indicators: indicators,
+        screenshot: screenshot,
+        created: new Date().toISOString()
+    };
+    
+    // Сохраняем в localStorage
+    const storageKey = `${department}QualityChecks`;
+    const existingData = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    existingData.push(record);
+    localStorage.setItem(storageKey, JSON.stringify(existingData));
+    
+    // Обновляем таблицу результатов
+    renderQualityResults(department);
+    
+    // Очищаем форму
+    clearQualityForm(department);
+    
+    showNotification('✅ Проверка сохранена успешно!');
+}
+
+// Рендер таблицы результатов
+function renderQualityResults(department) {
+    const table = document.getElementById(`${department}-quality-results`);
+    if (!table) return;
+    
+    const tbody = table.querySelector('tbody');
+    const storageKey = `${department}QualityChecks`;
+    const data = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    
+    tbody.innerHTML = '';
+    
+    // Сортируем по дате (новые сначала)
+    data.sort((a, b) => new Date(b.created) - new Date(a.created));
+    
+    data.forEach(record => {
+        const row = document.createElement('tr');
+        
+        if (department === 'op') {
+            row.innerHTML = `
+                <td>${record.date}</td>
+                <td>${record.manager || '-'}</td>
+                <td>${renderIndicatorBadge(record.indicators?.kev)}</td>
+                <td>${renderIndicatorBadge(record.indicators?.deadlines)}</td>
+                <td>${renderIndicatorBadge(record.indicators?.communication)}</td>
+                <td>${renderIndicatorBadge(record.indicators?.crm)}</td>
+                <td>${record.comment || '-'}</td>
+                <td>
+                    ${record.dealLink ? `<a href="${record.dealLink}" target="_blank">🔗</a>` : ''}
+                    ${record.screenshot ? `<span onclick="showScreenshot('${record.screenshot}')" style="cursor: pointer;">📸</span>` : ''}
+                    <button onclick="deleteQualityRecord('${department}', ${record.id})" class="btn-danger btn-sm">🗑️</button>
+                </td>
+            `;
+        } else {
+            row.innerHTML = `
+                <td>${record.date}</td>
+                <td>${record.manager || '-'}</td>
+                <td>${record.department}</td>
+                <td>${renderIndicatorBadge(record.indicators?.stage)}</td>
+                <td>${renderIndicatorBadge(record.indicators?.tz)}</td>
+                <td>${renderIndicatorBadge(record.indicators?.executors)}</td>
+                <td>${renderIndicatorBadge(record.indicators?.comments)}</td>
+                <td>${renderIndicatorBadge(record.indicators?.inwork)}</td>
+                <td>${renderIndicatorBadge(record.indicators?.fields)}</td>
+                <td>${renderIndicatorBadge(record.indicators?.prepayment)}</td>
+                <td>
+                    ${record.dealLink ? `<a href="${record.dealLink}" target="_blank">🔗</a>` : ''}
+                    ${record.screenshot ? `<span onclick="showScreenshot('${record.screenshot}')" style="cursor: pointer;">📸</span>` : ''}
+                    <button onclick="deleteQualityRecord('${department}', ${record.id})" class="btn-danger btn-sm">🗑️</button>
+                </td>
+            `;
+        }
+        
+        tbody.appendChild(row);
+    });
+}
+
+function renderIndicatorBadge(value) {
+    if (!value) return '<span class="quality-indicator-badge empty">-</span>';
+    if (value === 'good') return '<span class="quality-indicator-badge good">✓</span>';
+    if (value === 'bad') return '<span class="quality-indicator-badge bad">✗</span>';
+    return '<span class="quality-indicator-badge empty">-</span>';
+}
+
+window.deleteQualityRecord = function(department, recordId) {
+    if (!confirm('Удалить эту проверку?')) return;
+    
+    const storageKey = `${department}QualityChecks`;
+    const data = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    const filteredData = data.filter(record => record.id !== recordId);
+    localStorage.setItem(storageKey, JSON.stringify(filteredData));
+    
+    renderQualityResults(department);
+    showNotification('🗑️ Проверка удалена');
+};
+
+window.showScreenshot = function(dataUrl) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            <img src="${dataUrl}" style="width: 100%; height: auto; border-radius: 8px;">
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Закрытие по клику вне изображения
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+};
 
 // =====================================================
 // ЭКСПОРТ ГЛОБАЛЬНЫХ ФУНКЦИЙ
