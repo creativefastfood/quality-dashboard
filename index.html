@@ -6,8 +6,7 @@
   <title>Система управления качеством</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <!-- Firebase убран - используем локальное хранилище -->
 </head>
 <body>
   <!-- Главная страница -->
@@ -15,14 +14,14 @@
     <h1>Система управления качеством</h1>
     <button onclick="showPage('admin')">Админ панель</button>
     <button onclick="showPage('dashboard')">Дашборд</button>
-    <p id="firebase-status">Подключение к Firebase...</p>
+    <p id="firebase-status">Локальное хранилище готово к работе!</p>
   </div>
 
   <!-- Админ панель -->
   <div id="admin-page" class="page">
     <button onclick="showPage('home')">← Главная</button>
     <h2>Админ панель</h2>
-    <p id="admin-firebase-status">Firebase статус...</p>
+    <p id="admin-firebase-status">LocalStorage: готов к работе</p>
     
     <!-- Форма добавления проверочных данных -->
     <div class="form-section">
@@ -102,7 +101,7 @@
   <div id="dashboard-page" class="page">
     <button onclick="showPage('home')">← Главная</button>
     <h2>Дашборд качества</h2>
-    <p id="dashboard-firebase-status">Firebase статус...</p>
+    <p id="dashboard-firebase-status">LocalStorage: активно</p>
     
     <!-- Фильтры -->
     <div class="filters-section">

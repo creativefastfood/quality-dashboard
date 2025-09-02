@@ -1,17 +1,26 @@
-// 1) Конфигурация Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyDxQ8K7GFzjKl9mNq3YvCp2XrW5_HgT8Ac",
-  authDomain: "quality-dashboard-cf.firebaseapp.com",
-  databaseURL: "https://quality-dashboard-cf-default-rtdb.firebaseio.com",
-  projectId: "quality-dashboard-cf",
-  storageBucket: "quality-dashboard-cf.appspot.com",
-  messagingSenderId: "456789123456",
-  appId: "1:456789123456:web:a1b2c3d4e5f6789012"
-};
+// 1) Локальное хранилище данных (РАБОТАЕТ БЕЗ FIREBASE!)
+let qualityData = JSON.parse(localStorage.getItem('qualityData')) || {};
 
-// 2) Инициализация
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+// 2) Функции для работы с локальным хранилищем
+function saveToStorage() {
+  localStorage.setItem('qualityData', JSON.stringify(qualityData));
+}
+
+function addRecord(data) {
+  const id = Date.now().toString();
+  qualityData[id] = data;
+  saveToStorage();
+  return id;
+}
+
+function deleteRecord(id) {
+  delete qualityData[id];
+  saveToStorage();
+}
+
+function getAllRecords() {
+  return Object.values(qualityData);
+}
 
 // 3) Управление страницами
 function showPage(name) {
@@ -19,21 +28,19 @@ function showPage(name) {
   document.getElementById(name + '-page').classList.add('active');
 }
 
-// 4) Обновление статуса подключения
-db.ref('.info/connected').on('value', snap => {
-  const ok = snap.val() === true;
-  document.getElementById('firebase-status').textContent = ok ? 'Firebase: подключено' : 'Firebase: нет связи';
-  document.getElementById('admin-firebase-status').textContent = ok ? 'Firebase: OK' : 'Firebase: OFF';
-  document.getElementById('dashboard-firebase-status').textContent = ok ? 'Firebase: OK' : 'Firebase: OFF';
-});
+// 4) Обновление статуса (локальное хранилище)
+function updateStatus() {
+  document.getElementById('firebase-status').textContent = 'LocalStorage: активно';
+  document.getElementById('admin-firebase-status').textContent = 'LocalStorage: OK';
+  document.getElementById('dashboard-firebase-status').textContent = 'LocalStorage: OK';
+}
 
-// 5) Слушаем данные и рендерим
-db.ref('qualityData').on('value', snap => {
-  const data = snap.val() || {};
-  const arr = Object.values(data);
-  renderAdmin(arr);
-  renderDashboard(arr);
-});
+// 5) Обновление интерфейса
+function updateInterface() {
+  const data = getAllRecords();
+  renderAdmin(data);
+  renderDashboard(data);
+}
 
 // 6) Рендер админки (пример)
 function renderAdmin(data) {
@@ -324,31 +331,31 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// 8) Обработка формы добавления данных
-document.getElementById('quality-form').addEventListener('submit', function(e) {
-  e.preventDefault();
-  
-  const formData = {
-    manager: document.getElementById('manager-select').value,
-    category: document.getElementById('category-select').value,
-    indicator: document.getElementById('indicator-select').value,
-    value: parseFloat(document.getElementById('value-input').value),
-    date: document.getElementById('date-input').value,
-    comment: document.getElementById('comment-input').value,
-    timestamp: Date.now()
-  };
-  
-  // Сохраняем в Firebase
-  const newKey = db.ref('qualityData').push().key;
-  db.ref('qualityData/' + newKey).set(formData)
-    .then(() => {
-      alert('Данные успешно добавлены!');
+// 8) Обработка формы добавления данных (ЛОКАЛЬНО!)
+function setupFormHandler() {
+  const form = document.getElementById('quality-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = {
+        manager: document.getElementById('manager-select').value,
+        category: document.getElementById('category-select').value,
+        indicator: document.getElementById('indicator-select').value,
+        value: parseFloat(document.getElementById('value-input').value),
+        date: document.getElementById('date-input').value,
+        comment: document.getElementById('comment-input').value,
+        timestamp: Date.now()
+      };
+      
+      // Сохраняем локально
+      addRecord(formData);
+      alert('Данные успешно добавлены в локальное хранилище!');
       clearForm();
-    })
-    .catch(error => {
-      alert('Ошибка при сохранении: ' + error.message);
+      updateInterface();
     });
-});
+  }
+}
 
 // 9) Очистка формы
 function clearForm() {
@@ -356,35 +363,29 @@ function clearForm() {
   document.getElementById('date-input').value = new Date().toISOString().split('T')[0];
 }
 
-// 10) Экспорт данных в Excel
+// 10) Экспорт данных в Excel (ЛОКАЛЬНО!)
 function exportData() {
-  db.ref('qualityData').once('value').then(snap => {
-    const data = snap.val() || {};
-    const arr = Object.values(data);
-    
-    let csv = 'Дата,Менеджер,Категория,Показатель,Значение,Комментарий\n';
-    arr.forEach(item => {
-      csv += `${item.date},${item.manager},${item.category},${item.indicator},${item.value},"${item.comment || ''}"\n`;
-    });
-    
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'quality_data_' + new Date().toISOString().split('T')[0] + '.csv';
-    link.click();
+  const data = getAllRecords();
+  
+  let csv = 'Дата,Менеджер,Категория,Показатель,Значение,Комментарий\n';
+  data.forEach(item => {
+    csv += `${item.date},${item.manager},${item.category},${item.indicator},${item.value},"${item.comment || ''}"\n`;
   });
+  
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'quality_data_' + new Date().toISOString().split('T')[0] + '.csv';
+  link.click();
 }
 
-// 11) Очистка всех данных
+// 11) Очистка всех данных (ЛОКАЛЬНО!)
 function clearAllData() {
   if (confirm('Вы уверены, что хотите удалить ВСЕ данные? Это действие необратимо!')) {
-    db.ref('qualityData').remove()
-      .then(() => {
-        alert('Все данные удалены!');
-      })
-      .catch(error => {
-        alert('Ошибка при удалении: ' + error.message);
-      });
+    qualityData = {};
+    saveToStorage();
+    alert('Все данные удалены!');
+    updateInterface();
   }
 }
 
@@ -431,16 +432,12 @@ function renderAdmin(data) {
   }
 }
 
-// 13) Удаление записи
-function deleteRecord(key) {
+// 13) Удаление записи (ЛОКАЛЬНО!)
+function deleteRecordById(key) {
   if (confirm('Удалить эту запись?')) {
-    db.ref('qualityData/' + key).remove()
-      .then(() => {
-        alert('Запись удалена!');
-      })
-      .catch(error => {
-        alert('Ошибка при удалении: ' + error.message);
-      });
+    deleteRecord(key);
+    alert('Запись удалена!');
+    updateInterface();
   }
 }
 
@@ -449,5 +446,28 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('date-input').value = new Date().toISOString().split('T')[0];
 });
 
-// 15) Запуск на первой загрузке
-showPage('home');
+// 15) Инициализация приложения
+function initApp() {
+  updateStatus();
+  updateInterface();
+  setupFormHandler();
+  showPage('home');
+  
+  // Устанавливаем текущую дату
+  setTimeout(() => {
+    const dateInput = document.getElementById('date-input');
+    if (dateInput) {
+      dateInput.value = new Date().toISOString().split('T')[0];
+    }
+  }, 100);
+}
+
+// 16) Запуск при загрузке
+document.addEventListener('DOMContentLoaded', initApp);
+
+// Дополнительная инициализация для старых браузеров
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
