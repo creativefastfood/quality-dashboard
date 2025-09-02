@@ -1,473 +1,1193 @@
-// 1) Локальное хранилище данных (РАБОТАЕТ БЕЗ FIREBASE!)
-let qualityData = JSON.parse(localStorage.getItem('qualityData')) || {};
+// =====================================================
+// СИСТЕМА УПРАВЛЕНИЯ КАЧЕСТВОМ - ГЛАВНЫЙ ФАЙЛ
+// =====================================================
 
-// 2) Функции для работы с локальным хранилищем
-function saveToStorage() {
-  localStorage.setItem('qualityData', JSON.stringify(qualityData));
-}
+console.log('🚀 Инициализация системы управления качеством...');
 
-function addRecord(data) {
-  const id = Date.now().toString();
-  qualityData[id] = data;
-  saveToStorage();
-  return id;
-}
+// =====================================================
+// ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И КОНСТАНТЫ
+// =====================================================
+let currentPage = 'home';
+let charts = {}; // Хранилище для графиков Chart.js
 
-function deleteRecord(id) {
-  delete qualityData[id];
-  saveToStorage();
-}
+const MONTHS_ORDER = [
+    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+];
 
-function getAllRecords() {
-  return Object.values(qualityData);
-}
-
-// 3) Управление страницами
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
-  document.getElementById(name + '-page').classList.add('active');
-}
-
-// 4) Обновление статуса (локальное хранилище)
-function updateStatus() {
-  document.getElementById('firebase-status').textContent = 'LocalStorage: активно';
-  document.getElementById('admin-firebase-status').textContent = 'LocalStorage: OK';
-  document.getElementById('dashboard-firebase-status').textContent = 'LocalStorage: OK';
-}
-
-// 5) Обновление интерфейса
-function updateInterface() {
-  const data = getAllRecords();
-  renderAdmin(data);
-  renderDashboard(data);
-}
-
-// 6) Рендер админки (пример)
-function renderAdmin(data) {
-  const container = document.getElementById('manual-panel');
-  container.innerHTML = '';
-  data.forEach((item, i) => {
-    const div = document.createElement('div');
-    div.textContent = `${i+1}. ${item.manager} | ${item.category} | ${item.indicator} = ${item.value}`;
-    container.append(div);
-  });
-}
-
-// 7) Глобальные переменные для фильтрации
-let allData = [];
-let filteredData = [];
-let currentCharts = {};
-
-// 8) Рендер дашборда с фильтрацией
-function renderDashboard(data) {
-  allData = data;
-  populateFilterOptions(data);
-  applyFilters();
-}
-
-// 9) Заполнение опций фильтров
-function populateFilterOptions(data) {
-  const managers = [...new Set(data.map(item => item.manager))].sort();
-  const categories = [...new Set(data.map(item => item.category))].sort();
-  
-  const managerFilter = document.getElementById('manager-filter');
-  const categoryFilter = document.getElementById('category-filter');
-  
-  // Очищаем и заполняем менеджеров
-  managerFilter.innerHTML = '<option value="all">Все менеджеры</option>';
-  managers.forEach(manager => {
-    managerFilter.innerHTML += `<option value="${manager}">${manager}</option>`;
-  });
-  
-  // Очищаем и заполняем категории
-  categoryFilter.innerHTML = '<option value="all">Все категории</option>';
-  categories.forEach(category => {
-    categoryFilter.innerHTML += `<option value="${category}">${category}</option>`;
-  });
-}
-
-// 10) Применение фильтров
-function applyFilters() {
-  const periodFilter = document.getElementById('period-filter').value;
-  const managerFilter = document.getElementById('manager-filter').value;
-  const categoryFilter = document.getElementById('category-filter').value;
-  
-  filteredData = allData.filter(item => {
-    // Фильтр по периоду
-    if (periodFilter !== 'all') {
-      const itemDate = new Date(item.date);
-      const now = new Date();
-      
-      switch (periodFilter) {
-        case 'today':
-          if (itemDate.toDateString() !== now.toDateString()) return false;
-          break;
-        case 'week':
-          const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
-          if (itemDate < weekAgo) return false;
-          break;
-        case 'month':
-          const monthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
-          if (itemDate < monthAgo) return false;
-          break;
-        case 'quarter':
-          const quarterAgo = new Date(now - 90 * 24 * 60 * 60 * 1000);
-          if (itemDate < quarterAgo) return false;
-          break;
-        case 'custom':
-          const dateFrom = new Date(document.getElementById('date-from').value);
-          const dateTo = new Date(document.getElementById('date-to').value);
-          if (itemDate < dateFrom || itemDate > dateTo) return false;
-          break;
-      }
+// =====================================================
+// СИСТЕМА ХРАНЕНИЯ ДАННЫХ
+// =====================================================
+class DataManager {
+    static getOPData() {
+        try {
+            const data = JSON.parse(localStorage.getItem('opDashboardData') || '[]');
+            console.log(`📊 Загружено ОП данных: ${data.length}`);
+            return Array.isArray(data) ? data : [];
+        } catch (e) {
+            console.error('Ошибка загрузки ОП данных:', e);
+            return this.generateTestOPData();
+        }
     }
+
+    static getProdData() {
+        try {
+            const data = JSON.parse(localStorage.getItem('prodDashboardData') || '[]');
+            console.log(`📊 Загружено Продакшн данных: ${data.length}`);
+            return Array.isArray(data) ? data : [];
+        } catch (e) {
+            console.error('Ошибка загрузки Продакшн данных:', e);
+            return this.generateTestProdData();
+        }
+    }
+
+    static saveOPData(data) {
+        localStorage.setItem('opDashboardData', JSON.stringify(data));
+        console.log(`💾 Сохранено ОП данных: ${data.length}`);
+    }
+
+    static saveProdData(data) {
+        localStorage.setItem('prodDashboardData', JSON.stringify(data));
+        console.log(`💾 Сохранено Продакшн данных: ${data.length}`);
+    }
+
+    static generateTestOPData() {
+        console.log('🔄 Генерация тестовых данных ОП');
+        return [
+            {
+                id: this.generateId(),
+                date: '25.08.2025',
+                manager: 'Иван Петров',
+                category: 'Продажи',
+                indicator: 'Качество презентации',
+                value: 92,
+                month: 'Август',
+                source: 'test',
+                appeal: { status: 'none', note: '', createdAt: null }
+            },
+            {
+                id: this.generateId(),
+                date: '24.08.2025',
+                manager: 'Мария Сидорова',
+                category: 'Продажи',
+                indicator: 'Работа с возражениями',
+                value: 88,
+                month: 'Август',
+                source: 'test',
+                appeal: { status: 'none', note: '', createdAt: null }
+            },
+            {
+                id: this.generateId(),
+                date: '23.08.2025',
+                manager: 'Алексей Козлов',
+                category: 'Продажи',
+                indicator: 'Закрытие сделки',
+                value: 76,
+                month: 'Август',
+                source: 'test',
+                appeal: { status: 'none', note: '', createdAt: null }
+            },
+            {
+                id: this.generateId(),
+                date: '22.08.2025',
+                manager: 'Елена Романова',
+                category: 'Продажи',
+                indicator: 'Клиентский сервис',
+                value: 95,
+                month: 'Июль',
+                source: 'test',
+                appeal: { status: 'none', note: '', createdAt: null }
+            }
+        ];
+    }
+
+    static generateTestProdData() {
+        console.log('🔄 Генерация тестовых данных Продакшн');
+        return [
+            {
+                id: this.generateId(),
+                date: '25.08.2025',
+                manager: 'Анна Астапенкова',
+                category: 'Координация',
+                indicator: 'Актуальность стадии проекта по канбану',
+                value: 90,
+                month: 'Август',
+                source: 'test',
+                appeal: { status: 'none', note: '', createdAt: null }
+            },
+            {
+                id: this.generateId(),
+                date: '24.08.2025',
+                manager: 'Азиза Кадырова',
+                category: 'Координация',
+                indicator: 'Заполнены все обязательные поля в Битрикс',
+                value: 85,
+                month: 'Август',
+                source: 'test',
+                appeal: { status: 'none', note: '', createdAt: null }
+            },
+            {
+                id: this.generateId(),
+                date: '23.08.2025',
+                manager: 'Рената Галиулина',
+                category: 'Координация',
+                indicator: 'ТЗ прикреплено в сделку файлом в Битрикс',
+                value: 78,
+                month: 'Август',
+                source: 'test',
+                appeal: { status: 'none', note: '', createdAt: null }
+            },
+            {
+                id: this.generateId(),
+                date: '22.08.2025',
+                manager: 'София Кондратьева',
+                category: 'Продюсеры',
+                indicator: 'В сделке есть предоплата',
+                value: 96,
+                month: 'Июль',
+                source: 'test',
+                appeal: { status: 'none', note: '', createdAt: null }
+            }
+        ];
+    }
+
+    static generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    static addOPRecord(record) {
+        const data = this.getOPData();
+        record.id = this.generateId();
+        record.appeal = { status: 'none', note: '', createdAt: null };
+        data.unshift(record);
+        this.saveOPData(data);
+        return record;
+    }
+
+    static addProdRecord(record) {
+        const data = this.getProdData();
+        record.id = this.generateId();
+        record.appeal = { status: 'none', note: '', createdAt: null };
+        data.unshift(record);
+        this.saveProdData(data);
+        return record;
+    }
+}
+
+// =====================================================
+// НАВИГАЦИЯ МЕЖДУ СТРАНИЦАМИ
+// =====================================================
+function showPage(pageId) {
+    console.log(`🔄 Переход на страницу: ${pageId}`);
     
-    // Фильтр по менеджеру
-    if (managerFilter !== 'all' && item.manager !== managerFilter) return false;
-    
-    // Фильтр по категории
-    if (categoryFilter !== 'all' && item.category !== categoryFilter) return false;
-    
-    return true;
-  });
-  
-  updateDashboard();
-}
-
-// 11) Обновление дашборда с отфильтрованными данными
-function updateDashboard() {
-  updateStats();
-  updateCharts();
-  updateTables();
-}
-
-// 12) Обновление статистики
-function updateStats() {
-  const totalChecks = filteredData.length;
-  const avgScore = totalChecks > 0 ? (filteredData.reduce((sum, item) => sum + item.value, 0) / totalChecks).toFixed(1) : 0;
-  const bestScore = totalChecks > 0 ? Math.max(...filteredData.map(item => item.value)) : 0;
-  const worstScore = totalChecks > 0 ? Math.min(...filteredData.map(item => item.value)) : 0;
-  
-  document.getElementById('total-checks').textContent = totalChecks;
-  document.getElementById('avg-score').textContent = avgScore + '%';
-  document.getElementById('best-score').textContent = bestScore + '%';
-  document.getElementById('worst-score').textContent = worstScore + '%';
-}
-
-// 13) Обновление графиков
-function updateCharts() {
-  // Уничтожаем старые графики
-  Object.values(currentCharts).forEach(chart => chart.destroy());
-  currentCharts = {};
-  
-  // График рейтинга менеджеров
-  const managerStats = {};
-  filteredData.forEach(item => {
-    if (!managerStats[item.manager]) {
-      managerStats[item.manager] = { sum: 0, count: 0 };
-    }
-    managerStats[item.manager].sum += item.value;
-    managerStats[item.manager].count++;
-  });
-  
-  const managerLabels = Object.keys(managerStats);
-  const managerScores = managerLabels.map(manager => 
-    (managerStats[manager].sum / managerStats[manager].count).toFixed(1)
-  );
-  
-  const ctx1 = document.getElementById('chartLeaders').getContext('2d');
-  currentCharts.leaders = new Chart(ctx1, {
-    type: 'bar',
-    data: {
-      labels: managerLabels,
-      datasets: [{
-        label: 'Средний балл',
-        data: managerScores,
-        backgroundColor: '#4CAF50',
-        borderColor: '#45a049',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: { beginAtZero: true, max: 100 }
-      }
-    }
-  });
-  
-  // График по категориям
-  const categoryStats = {};
-  filteredData.forEach(item => {
-    if (!categoryStats[item.category]) {
-      categoryStats[item.category] = { sum: 0, count: 0 };
-    }
-    categoryStats[item.category].sum += item.value;
-    categoryStats[item.category].count++;
-  });
-  
-  const categoryLabels = Object.keys(categoryStats);
-  const categoryScores = categoryLabels.map(category => 
-    (categoryStats[category].sum / categoryStats[category].count).toFixed(1)
-  );
-  
-  const ctx2 = document.getElementById('chartCategories').getContext('2d');
-  currentCharts.categories = new Chart(ctx2, {
-    type: 'doughnut',
-    data: {
-      labels: categoryLabels,
-      datasets: [{
-        data: categoryScores,
-        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
-      }]
-    },
-    options: { responsive: true }
-  });
-  
-  // График динамики по дням
-  const dailyStats = {};
-  filteredData.forEach(item => {
-    if (!dailyStats[item.date]) {
-      dailyStats[item.date] = { sum: 0, count: 0 };
-    }
-    dailyStats[item.date].sum += item.value;
-    dailyStats[item.date].count++;
-  });
-  
-  const sortedDates = Object.keys(dailyStats).sort();
-  const dailyScores = sortedDates.map(date => 
-    (dailyStats[date].sum / dailyStats[date].count).toFixed(1)
-  );
-  
-  const ctx3 = document.getElementById('chartTrend').getContext('2d');
-  currentCharts.trend = new Chart(ctx3, {
-    type: 'line',
-    data: {
-      labels: sortedDates,
-      datasets: [{
-        label: 'Средний балл по дням',
-        data: dailyScores,
-        borderColor: '#FF6384',
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        tension: 0.1
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: { beginAtZero: true, max: 100 }
-      }
-    }
-  });
-}
-
-// 14) Обновление таблиц
-function updateTables() {
-  // Таблица слабых показателей
-  const indicatorStats = {};
-  filteredData.forEach(item => {
-    if (!indicatorStats[item.indicator]) {
-      indicatorStats[item.indicator] = { sum: 0, count: 0 };
-    }
-    indicatorStats[item.indicator].sum += item.value;
-    indicatorStats[item.indicator].count++;
-  });
-  
-  const tblWeak = document.getElementById('tblWeak');
-  tblWeak.innerHTML = '<thead><tr><th>Показатель</th><th>Средний %</th><th>Количество проверок</th></tr></thead><tbody></tbody>';
-  
-  Object.entries(indicatorStats)
-    .map(([indicator, stats]) => ({
-      indicator,
-      avg: (stats.sum / stats.count).toFixed(1),
-      count: stats.count
-    }))
-    .filter(item => item.avg < 70)
-    .sort((a, b) => a.avg - b.avg)
-    .forEach(item => {
-      tblWeak.querySelector('tbody').innerHTML += 
-        `<tr><td>${item.indicator}</td><td class="weak-score">${item.avg}%</td><td>${item.count}</td></tr>`;
+    // Скрываем все страницы
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
     });
-  
-  // Детальная таблица
-  const tblDetail = document.getElementById('tblDetail');
-  tblDetail.innerHTML = '<thead><tr><th>Дата</th><th>Менеджер</th><th>Категория</th><th>Показатель</th><th>Балл</th><th>Комментарий</th></tr></thead><tbody></tbody>';
-  
-  filteredData
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 50)
-    .forEach(item => {
-      const scoreClass = item.value < 70 ? 'weak-score' : item.value > 90 ? 'good-score' : '';
-      tblDetail.querySelector('tbody').innerHTML += 
-        `<tr>
-          <td>${item.date}</td>
-          <td>${item.manager}</td>
-          <td>${item.category}</td>
-          <td>${item.indicator}</td>
-          <td class="${scoreClass}">${item.value}%</td>
-          <td>${item.comment || ''}</td>
-        </tr>`;
-    });
-}
-
-// 15) Сброс фильтров
-function resetFilters() {
-  document.getElementById('period-filter').value = 'all';
-  document.getElementById('manager-filter').value = 'all';
-  document.getElementById('category-filter').value = 'all';
-  document.getElementById('custom-dates').style.display = 'none';
-  applyFilters();
-}
-
-// 16) Обработка изменения периода
-document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('period-filter').addEventListener('change', function() {
-    const customDates = document.getElementById('custom-dates');
-    if (this.value === 'custom') {
-      customDates.style.display = 'block';
+    
+    // Показываем нужную страницу
+    const targetPage = document.getElementById(`${pageId}-page`);
+    if (targetPage) {
+        targetPage.classList.add('active');
+        currentPage = pageId;
+        
+        // Инициализируем страницу
+        switch(pageId) {
+            case 'op-admin':
+                initOPAdmin();
+                break;
+            case 'prod-admin':
+                initProdAdmin();
+                break;
+            case 'op-dashboard':
+                initOPDashboard();
+                break;
+            case 'prod-dashboard':
+                initProdDashboard();
+                break;
+            case 'home':
+                // Главная страница не требует инициализации
+                break;
+        }
     } else {
-      customDates.style.display = 'none';
+        console.error(`Страница ${pageId} не найдена`);
     }
-  });
-});
+}
 
-// 8) Обработка формы добавления данных (ЛОКАЛЬНО!)
-function setupFormHandler() {
-  const form = document.getElementById('quality-form');
-  if (form) {
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const formData = {
-        manager: document.getElementById('manager-select').value,
-        category: document.getElementById('category-select').value,
-        indicator: document.getElementById('indicator-select').value,
-        value: parseFloat(document.getElementById('value-input').value),
-        date: document.getElementById('date-input').value,
-        comment: document.getElementById('comment-input').value,
-        timestamp: Date.now()
-      };
-      
-      // Сохраняем локально
-      addRecord(formData);
-      alert('Данные успешно добавлены в локальное хранилище!');
-      clearForm();
-      updateInterface();
+// =====================================================
+// АДМИНИСТРАТИВНЫЕ ПАНЕЛИ
+// =====================================================
+function initOPAdmin() {
+    console.log('⚙️ Инициализация админки ОП');
+    
+    // Инициализация формы ручного ввода
+    const form = document.getElementById('op-manual-form');
+    if (form) {
+        form.addEventListener('submit', handleOPManualSubmit);
+    }
+    
+    // Инициализация загрузки CSV
+    setupCSVUpload('op');
+    
+    // Обновление истории
+    updateHistory('op');
+}
+
+function initProdAdmin() {
+    console.log('🔧 Инициализация админки Продакшн');
+    
+    // Инициализация формы ручного ввода
+    const form = document.getElementById('prod-manual-form');
+    if (form) {
+        form.addEventListener('submit', handleProdManualSubmit);
+    }
+    
+    // Инициализация загрузки CSV
+    setupCSVUpload('prod');
+    
+    // Обновление истории
+    updateHistory('prod');
+}
+
+function handleOPManualSubmit(e) {
+    e.preventDefault();
+    
+    const formData = {
+        date: new Date().toLocaleDateString('ru-RU'),
+        manager: document.getElementById('op-manager').value,
+        category: 'Продажи',
+        indicator: document.getElementById('op-indicator').value,
+        value: parseInt(document.getElementById('op-value').value),
+        month: document.getElementById('op-month').value,
+        source: 'manual'
+    };
+    
+    console.log('📝 Добавление ОП записи:', formData);
+    
+    if (validateRecord(formData)) {
+        DataManager.addOPRecord(formData);
+        showNotification('✅ Запись успешно добавлена');
+        e.target.reset();
+        updateHistory('op');
+    } else {
+        showNotification('❌ Заполните все поля', 'error');
+    }
+}
+
+function handleProdManualSubmit(e) {
+    e.preventDefault();
+    
+    const formData = {
+        date: new Date().toLocaleDateString('ru-RU'),
+        manager: document.getElementById('prod-manager').value,
+        category: document.getElementById('prod-category').value,
+        indicator: document.getElementById('prod-indicator').value,
+        value: parseInt(document.getElementById('prod-value').value),
+        month: document.getElementById('prod-month').value,
+        source: 'manual'
+    };
+    
+    console.log('📝 Добавление Продакшн записи:', formData);
+    
+    if (validateRecord(formData)) {
+        DataManager.addProdRecord(formData);
+        showNotification('✅ Запись успешно добавлена');
+        e.target.reset();
+        updateHistory('prod');
+    } else {
+        showNotification('❌ Заполните все поля', 'error');
+    }
+}
+
+function validateRecord(record) {
+    return record.manager && 
+           record.indicator && 
+           record.value >= 0 && 
+           record.value <= 100 && 
+           record.month;
+}
+
+// =====================================================
+// ЗАГРУЗКА CSV ФАЙЛОВ
+// =====================================================
+function setupCSVUpload(type) {
+    const uploadZone = document.getElementById(`${type}-upload`);
+    const fileInput = document.getElementById(`${type}-csv-input`);
+    
+    if (!uploadZone || !fileInput) return;
+    
+    // Клик по зоне загрузки
+    uploadZone.addEventListener('click', () => fileInput.click());
+    
+    // Drag & Drop
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
     });
-  }
+    
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+    
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleCSVFile(files[0], type);
+        }
+    });
+    
+    // Выбор файла
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleCSVFile(e.target.files[0], type);
+        }
+    });
 }
 
-// 9) Очистка формы
-function clearForm() {
-  document.getElementById('quality-form').reset();
-  document.getElementById('date-input').value = new Date().toISOString().split('T')[0];
+function handleCSVFile(file, type) {
+    console.log(`📁 Обработка CSV файла: ${file.name} для ${type}`);
+    
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+        showNotification('❌ Выберите CSV файл', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const csvData = parseCSV(e.target.result);
+            const convertedData = convertCSVData(csvData, type, file.name);
+            
+            if (convertedData.length > 0) {
+                if (type === 'op') {
+                    const existingData = DataManager.getOPData();
+                    DataManager.saveOPData([...convertedData, ...existingData]);
+                } else {
+                    const existingData = DataManager.getProdData();
+                    DataManager.saveProdData([...convertedData, ...existingData]);
+                }
+                
+                showNotification(`✅ Загружено ${convertedData.length} записей из ${file.name}`);
+                updateHistory(type);
+                
+                // Сохранение информации о файле
+                saveFileInfo(file.name, convertedData.length, type);
+            } else {
+                showNotification('⚠️ Не удалось извлечь данные из файла', 'warning');
+            }
+        } catch (error) {
+            console.error('Ошибка обработки CSV:', error);
+            showNotification('❌ Ошибка обработки файла', 'error');
+        }
+    };
+    
+    reader.readAsText(file, 'UTF-8');
 }
 
-// 10) Экспорт данных в Excel (ЛОКАЛЬНО!)
-function exportData() {
-  const data = getAllRecords();
-  
-  let csv = 'Дата,Менеджер,Категория,Показатель,Значение,Комментарий\n';
-  data.forEach(item => {
-    csv += `${item.date},${item.manager},${item.category},${item.indicator},${item.value},"${item.comment || ''}"\n`;
-  });
-  
-  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'quality_data_' + new Date().toISOString().split('T')[0] + '.csv';
-  link.click();
+function parseCSV(csvText) {
+    const lines = csvText.split('\n').filter(line => line.trim());
+    if (lines.length < 2) return [];
+    
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    const data = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+        const row = {};
+        
+        headers.forEach((header, index) => {
+            row[header] = values[index] || '';
+        });
+        
+        data.push(row);
+    }
+    
+    return data;
 }
 
-// 11) Очистка всех данных (ЛОКАЛЬНО!)
-function clearAllData() {
-  if (confirm('Вы уверены, что хотите удалить ВСЕ данные? Это действие необратимо!')) {
-    qualityData = {};
-    saveToStorage();
-    alert('Все данные удалены!');
-    updateInterface();
-  }
+function convertCSVData(csvData, type, fileName) {
+    const convertedData = [];
+    const month = extractMonthFromFileName(fileName);
+    
+    csvData.forEach(row => {
+        // Пропускаем пустые строки
+        if (!row || Object.keys(row).length === 0) return;
+        
+        if (type === 'op') {
+            // Логика для ОП файлов
+            if (row['Менеджер'] && row['Показатель'] && row['Значение']) {
+                convertedData.push({
+                    id: DataManager.generateId(),
+                    date: new Date().toLocaleDateString('ru-RU'),
+                    manager: row['Менеджер'],
+                    category: row['Категория'] || 'Продажи',
+                    indicator: row['Показатель'],
+                    value: parseFloat(row['Значение']) || 0,
+                    month: month,
+                    source: 'csv',
+                    appeal: { status: 'none', note: '', createdAt: null }
+                });
+            }
+        } else {
+            // Логика для Продакшн файлов
+            Object.keys(row).forEach(key => {
+                if (key.includes('Unnamed') || 
+                    key === 'Month' || 
+                    key === 'Week' || 
+                    key === 'Измеряемые показатели' ||
+                    key === 'Координация' ||
+                    key === 'Продюсеры') return;
+                
+                const indicator = row['Измеряемые показатели'];
+                const value = row[key];
+                
+                if (indicator && value !== undefined && value !== '') {
+                    let role = 'Координация';
+                    const producers = ['София Кондратьева'];
+                    if (producers.includes(key)) {
+                        role = 'Продюсеры';
+                    }
+                    
+                    const numValue = parseFloat(value) || 0;
+                    if (numValue >= 0) {
+                        convertedData.push({
+                            id: DataManager.generateId(),
+                            date: new Date().toLocaleDateString('ru-RU'),
+                            manager: key,
+                            category: role,
+                            indicator: indicator,
+                            value: numValue * 100,
+                            month: month,
+                            source: 'csv',
+                            appeal: { status: 'none', note: '', createdAt: null }
+                        });
+                    }
+                }
+            });
+        }
+    });
+    
+    return convertedData;
 }
 
-// 12) Улучшенный рендер админки с сортировкой и пагинацией
-function renderAdmin(data) {
-  const container = document.getElementById('manual-panel');
-  
-  // Сортировка по дате (новые сверху)
-  const sortedData = data.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-  
-  if (sortedData.length === 0) {
-    container.innerHTML = '<p class="no-data">Данные отсутствуют. Добавьте первую запись!</p>';
-    return;
-  }
-  
-  container.innerHTML = '<div class="records-header">Всего записей: ' + sortedData.length + '</div>';
-  
-  // Показываем последние 20 записей
-  const recentData = sortedData.slice(0, 20);
-  
-  recentData.forEach((item, i) => {
-    const div = document.createElement('div');
-    div.className = 'record-item';
-    div.innerHTML = `
-      <div class="record-info">
-        <strong>${item.date}</strong> | ${item.manager} | ${item.category}
-        <br>
-        <span class="indicator">${item.indicator}: <strong>${item.value}%</strong></span>
-        ${item.comment ? '<br><small class="comment">' + item.comment + '</small>' : ''}
-      </div>
-      <div class="record-actions">
-        <button onclick="editRecord('${Object.keys(data)[i]}')" class="btn-edit">✏️</button>
-        <button onclick="deleteRecord('${Object.keys(data)[i]}')" class="btn-delete">🗑️</button>
-      </div>
-    `;
-    container.appendChild(div);
-  });
-  
-  if (sortedData.length > 20) {
-    const moreDiv = document.createElement('div');
-    moreDiv.className = 'load-more';
-    moreDiv.innerHTML = `<button onclick="showAllRecords()">Показать все записи (${sortedData.length})</button>`;
-    container.appendChild(moreDiv);
-  }
+function extractMonthFromFileName(fileName) {
+    const monthMap = {
+        'yanvar': 'Январь', 'ianvar': 'Январь',
+        'fevral': 'Февраль',
+        'mart': 'Март',
+        'aprel': 'Апрель',
+        'mai': 'Май',
+        'iyun': 'Июнь',
+        'iyul': 'Июль', 'iiul': 'Июль',
+        'avgust': 'Август'
+    };
+    
+    const lowerFileName = fileName.toLowerCase();
+    for (const [key, value] of Object.entries(monthMap)) {
+        if (lowerFileName.includes(key)) {
+            return value;
+        }
+    }
+    
+    // Fallback
+    const currentMonth = new Date().toLocaleDateString('ru-RU', { month: 'long' });
+    return currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1);
 }
 
-// 13) Удаление записи (ЛОКАЛЬНО!)
-function deleteRecordById(key) {
-  if (confirm('Удалить эту запись?')) {
-    deleteRecord(key);
-    alert('Запись удалена!');
-    updateInterface();
-  }
+function saveFileInfo(fileName, recordCount, type) {
+    const key = `${type}History`;
+    const history = JSON.parse(localStorage.getItem(key) || '[]');
+    
+    history.unshift({
+        fileName,
+        recordCount,
+        uploadDate: new Date().toLocaleString('ru-RU'),
+        type: 'file'
+    });
+    
+    // Ограничиваем историю 50 файлами
+    if (history.length > 50) {
+        history.splice(50);
+    }
+    
+    localStorage.setItem(key, JSON.stringify(history));
 }
 
-// 14) Инициализация даты по умолчанию
+// =====================================================
+// ИСТОРИЯ ОПЕРАЦИЙ
+// =====================================================
+function updateHistory(type) {
+    // Обновляем последние записи
+    updateRecentRecords(type);
+    
+    // Обновляем список файлов
+    updateFilesList(type);
+}
+
+function updateRecentRecords(type) {
+    const data = type === 'op' ? DataManager.getOPData() : DataManager.getProdData();
+    const tableBody = document.querySelector(`#${type}-recent-table tbody`);
+    
+    if (!tableBody) return;
+    
+    const recentData = data.slice(0, 20); // Последние 20 записей
+    
+    tableBody.innerHTML = recentData.map(record => `
+        <tr>
+            <td>${record.date}</td>
+            <td>${record.manager}</td>
+            ${type === 'prod' ? `<td>${record.category}</td>` : ''}
+            <td>${record.indicator}</td>
+            <td class="${getScoreClass(record.value)}">${record.value}%</td>
+            <td>${record.month}</td>
+            <td>
+                <span class="source-badge ${record.source}">${record.source}</span>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updateFilesList(type) {
+    const key = `${type}History`;
+    const history = JSON.parse(localStorage.getItem(key) || '[]');
+    const container = document.getElementById(`${type}-files-list`);
+    
+    if (!container) return;
+    
+    if (history.length === 0) {
+        container.innerHTML = '<p class="no-files">Файлы еще не загружались</p>';
+        return;
+    }
+    
+    container.innerHTML = history.map(file => `
+        <div class="file-item">
+            <div class="file-info">
+                <h4>${file.fileName}</h4>
+                <p>Записей: ${file.recordCount} | Загружен: ${file.uploadDate}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showHistoryTab(type, tab) {
+    // Переключение вкладок
+    document.querySelectorAll(`#${type}-admin-page .tab-btn`).forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Показ контента
+    document.querySelectorAll(`#${type}-history-recent, #${type}-history-files`).forEach(content => {
+        content.style.display = 'none';
+    });
+    
+    document.getElementById(`${type}-history-${tab}`).style.display = 'block';
+}
+
+// =====================================================
+// ДАШБОРДЫ
+// =====================================================
+function initOPDashboard() {
+    console.log('📊 Инициализация дашборда ОП');
+    
+    const data = DataManager.getOPData();
+    console.log(`📋 Данных для ОП дашборда: ${data.length}`);
+    
+    // Инициализация фильтров
+    initializeFilters('op', data);
+    
+    // Рендер дашборда
+    renderDashboard('op', data);
+}
+
+function initProdDashboard() {
+    console.log('📈 Инициализация дашборда Продакшн');
+    
+    const data = DataManager.getProdData();
+    console.log(`📋 Данных для Продакшн дашборда: ${data.length}`);
+    
+    // Инициализация фильтров
+    initializeFilters('prod', data);
+    
+    // Рендер дашборда
+    renderDashboard('prod', data);
+}
+
+function initializeFilters(type, data) {
+    // Получение уникальных значений
+    const months = [...new Set(data.map(r => r.month).filter(Boolean))]
+        .sort((a, b) => MONTHS_ORDER.indexOf(a) - MONTHS_ORDER.indexOf(b));
+    
+    const managers = [...new Set(data.map(r => r.manager).filter(Boolean))]
+        .filter(name => name && name.length > 2)
+        .sort();
+    
+    const categories = [...new Set(data.map(r => r.category).filter(Boolean))].sort();
+    
+    console.log(`🔍 Фильтры ${type}: месяцы=${months.length}, сотрудники=${managers.length}, категории=${categories.length}`);
+    
+    // Заполнение селекторов
+    const monthSelect = document.getElementById(`${type}-dash-month`);
+    const managerSelect = document.getElementById(`${type}-dash-manager`);
+    const categorySelect = document.getElementById(`${type}-dash-category`);
+    
+    if (monthSelect) {
+        monthSelect.innerHTML = '<option value="">Все месяцы</option>' +
+            months.map(m => `<option value="${m}">${m}</option>`).join('');
+    }
+    
+    if (managerSelect) {
+        const label = type === 'op' ? 'сотрудники' : 'специалисты';
+        managerSelect.innerHTML = `<option value="">Все ${label}</option>` +
+            managers.map(m => `<option value="${m}">${m}</option>`).join('');
+    }
+    
+    if (categorySelect) {
+        categorySelect.innerHTML = '<option value="">Все роли</option>' +
+            categories.map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+    
+    // Добавление обработчиков событий
+    [monthSelect, managerSelect, categorySelect].forEach(select => {
+        if (select) {
+            select.addEventListener('change', () => {
+                console.log(`🔄 Фильтр изменен: ${select.id}="${select.value}"`);
+                renderDashboard(type, data);
+            });
+        }
+    });
+}
+
+function applyFilters(type, data) {
+    const monthFilter = document.getElementById(`${type}-dash-month`)?.value || '';
+    const managerFilter = document.getElementById(`${type}-dash-manager`)?.value || '';
+    const categoryFilter = document.getElementById(`${type}-dash-category`)?.value || '';
+    
+    const filtered = data.filter(record => {
+        const monthMatch = !monthFilter || record.month === monthFilter;
+        const managerMatch = !managerFilter || record.manager === managerFilter;
+        const categoryMatch = !categoryFilter || record.category === categoryFilter;
+        
+        return monthMatch && managerMatch && categoryMatch;
+    });
+    
+    console.log(`📊 Отфильтровано ${filtered.length} из ${data.length} записей`);
+    return filtered;
+}
+
+function renderDashboard(type, data) {
+    console.log(`🎨 Рендер дашборда ${type}`);
+    
+    const filteredData = applyFilters(type, data);
+    
+    // Обновление KPI
+    updateKPI(type, filteredData);
+    
+    // Обновление графиков
+    updateCharts(type, filteredData);
+    
+    // Обновление рейтинга
+    updateRating(type, filteredData);
+    
+    // Обновление апелляций
+    updateAppeals(type, filteredData);
+}
+
+// =====================================================
+// KPI БЛОКИ
+// =====================================================
+function updateKPI(type, data) {
+    const totalChecks = data.length;
+    const avgScore = totalChecks > 0 ? Math.round(data.reduce((sum, r) => sum + r.value, 0) / totalChecks) : 0;
+    const activeManagers = new Set(data.map(r => r.manager)).size;
+    const premiumCount = data.filter(r => r.value >= 85).length;
+    
+    // Обновление значений в DOM
+    const elements = {
+        [`${type}-total-checks`]: totalChecks,
+        [`${type}-avg-score`]: `${avgScore}%`,
+        [`${type}-active-managers`]: activeManagers,
+        [`${type}-premium-count`]: premiumCount
+    };
+    
+    Object.entries(elements).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+            element.classList.add('animate-update');
+            setTimeout(() => element.classList.remove('animate-update'), 300);
+        }
+    });
+    
+    console.log(`📈 KPI обновлен: проверок=${totalChecks}, средний балл=${avgScore}%, активных=${activeManagers}, премии=${premiumCount}`);
+}
+
+// =====================================================
+// ГРАФИКИ
+// =====================================================
+function updateCharts(type, data) {
+    // Тренд по месяцам
+    updateTrendChart(type, data);
+    
+    // Радар по показателям
+    updateRadarChart(type, data);
+}
+
+function updateTrendChart(type, data) {
+    const canvas = document.getElementById(`${type}-trend-chart`);
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Группировка по месяцам
+    const monthlyData = {};
+    data.forEach(record => {
+        if (!monthlyData[record.month]) {
+            monthlyData[record.month] = [];
+        }
+        monthlyData[record.month].push(record.value);
+    });
+    
+    // Вычисление средних значений
+    const chartData = MONTHS_ORDER.map(month => {
+        const values = monthlyData[month] || [];
+        return values.length > 0 ? Math.round(values.reduce((sum, val) => sum + val, 0) / values.length) : 0;
+    }).filter((val, index) => monthlyData[MONTHS_ORDER[index]]);
+    
+    const labels = MONTHS_ORDER.filter(month => monthlyData[month]);
+    
+    // Уничтожение старого графика
+    if (charts[`${type}-trend`]) {
+        charts[`${type}-trend`].destroy();
+    }
+    
+    // Создание нового графика
+    charts[`${type}-trend`] = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Средний балл по месяцам',
+                data: chartData,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#f1f5f9',
+                        font: { size: 12 }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        color: '#94a3b8',
+                        callback: function(value) { return value + '%'; }
+                    },
+                    grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                },
+                x: {
+                    ticks: { color: '#94a3b8' },
+                    grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                }
+            }
+        }
+    });
+}
+
+function updateRadarChart(type, data) {
+    const canvas = document.getElementById(`${type}-radar-chart`);
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Группировка по показателям
+    const indicatorData = {};
+    data.forEach(record => {
+        if (!indicatorData[record.indicator]) {
+            indicatorData[record.indicator] = [];
+        }
+        indicatorData[record.indicator].push(record.value);
+    });
+    
+    // Вычисление средних значений по показателям
+    const indicators = Object.keys(indicatorData).slice(0, 6); // Максимум 6 показателей
+    const averages = indicators.map(indicator => {
+        const values = indicatorData[indicator];
+        return Math.round(values.reduce((sum, val) => sum + val, 0) / values.length);
+    });
+    
+    // Уничтожение старого графика
+    if (charts[`${type}-radar`]) {
+        charts[`${type}-radar`].destroy();
+    }
+    
+    // Создание нового графика
+    charts[`${type}-radar`] = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: indicators.map(ind => ind.length > 20 ? ind.substring(0, 20) + '...' : ind),
+            datasets: [{
+                label: 'Показатели качества',
+                data: averages,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                borderWidth: 2,
+                pointBackgroundColor: '#3b82f6',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#f1f5f9',
+                        font: { size: 12 }
+                    }
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        color: '#94a3b8',
+                        backdropColor: 'transparent',
+                        callback: function(value) { return value + '%'; }
+                    },
+                    grid: { color: 'rgba(148, 163, 184, 0.2)' },
+                    angleLines: { color: 'rgba(148, 163, 184, 0.2)' },
+                    pointLabels: {
+                        color: '#f1f5f9',
+                        font: { size: 10 }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// =====================================================
+// РЕЙТИНГ СОТРУДНИКОВ
+// =====================================================
+function updateRating(type, data) {
+    const tableBody = document.querySelector(`#${type}-rating-table tbody`);
+    if (!tableBody) return;
+    
+    // Группировка по сотрудникам
+    const managerStats = {};
+    data.forEach(record => {
+        if (!managerStats[record.manager]) {
+            managerStats[record.manager] = {
+                manager: record.manager,
+                category: record.category,
+                totalScore: 0,
+                count: 0,
+                values: []
+            };
+        }
+        managerStats[record.manager].totalScore += record.value;
+        managerStats[record.manager].count += 1;
+        managerStats[record.manager].values.push(record.value);
+    });
+    
+    // Вычисление средних баллов и сортировка
+    const ranking = Object.values(managerStats)
+        .map(stat => ({
+            ...stat,
+            avgScore: Math.round(stat.totalScore / stat.count),
+            isPremium: (stat.totalScore / stat.count) >= 85
+        }))
+        .sort((a, b) => b.avgScore - a.avgScore);
+    
+    // Генерация HTML таблицы
+    tableBody.innerHTML = ranking.map((stat, index) => `
+        <tr class="ranking-row">
+            <td class="rank">${index + 1}</td>
+            <td class="manager-name">${stat.manager}</td>
+            ${type === 'prod' ? `<td class="category">${stat.category}</td>` : ''}
+            <td class="score ${getScoreClass(stat.avgScore)}">${stat.avgScore}%</td>
+            <td class="count">${stat.count}</td>
+            <td class="premium">
+                ${stat.isPremium ? '<span class="premium-indicator"><span class="premium-star">⭐</span> Премия</span>' : ''}
+            </td>
+        </tr>
+    `).join('');
+    
+    console.log(`🏆 Рейтинг обновлен: ${ranking.length} участников`);
+}
+
+function getScoreClass(score) {
+    if (score >= 85) return 'score-high';
+    if (score >= 75) return 'score-medium';
+    return 'score-low';
+}
+
+// =====================================================
+// СИСТЕМА АПЕЛЛЯЦИЙ
+// =====================================================
+function updateAppeals(type, data) {
+    const appealsData = data.filter(record => record.appeal && record.appeal.status !== 'none');
+    const container = document.querySelector(`#${type}-appeals-content .appeals-list`);
+    
+    if (!container) return;
+    
+    if (appealsData.length === 0) {
+        container.innerHTML = '<p class="no-appeals">Апелляций нет</p>';
+        return;
+    }
+    
+    container.innerHTML = appealsData.map(record => `
+        <div class="appeal-item">
+            <div class="appeal-header">
+                <strong>${record.manager}</strong>
+                <span class="appeal-status ${record.appeal.status}">${getAppealStatusText(record.appeal.status)}</span>
+            </div>
+            <div class="appeal-details">
+                <p><strong>Показатель:</strong> ${record.indicator}</p>
+                <p><strong>Оценка:</strong> <span class="${getScoreClass(record.value)}">${record.value}%</span></p>
+                <p><strong>Причина:</strong> ${record.appeal.note}</p>
+                <p><strong>Дата:</strong> ${new Date(record.appeal.createdAt).toLocaleString('ru-RU')}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getAppealStatusText(status) {
+    const statusMap = {
+        'new': 'Новая',
+        'processing': 'На рассмотрении',
+        'resolved': 'Решена'
+    };
+    return statusMap[status] || status;
+}
+
+function showAppeals(type, filter) {
+    // Переключение вкладок
+    document.querySelectorAll(`#${type}-appeals-content .tab-btn`).forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Здесь можно добавить логику фильтрации апелляций
+    const data = type === 'op' ? DataManager.getOPData() : DataManager.getProdData();
+    const filteredData = applyFilters(type, data);
+    updateAppeals(type, filteredData);
+}
+
+// =====================================================
+// МОДАЛЬНЫЕ ОКНА И АПЕЛЛЯЦИИ
+// =====================================================
+function openAppealModal(recordId) {
+    const modal = document.getElementById('appeal-modal');
+    const recordIdInput = document.getElementById('appeal-record-id');
+    
+    if (modal && recordIdInput) {
+        recordIdInput.value = recordId;
+        modal.style.display = 'flex';
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Обработчик формы апелляции
 document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('date-input').value = new Date().toISOString().split('T')[0];
+    const appealForm = document.getElementById('appeal-form');
+    if (appealForm) {
+        appealForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const recordId = document.getElementById('appeal-record-id').value;
+            const reason = document.getElementById('appeal-reason').value;
+            
+            if (recordId && reason) {
+                submitAppeal(recordId, reason);
+                closeModal('appeal-modal');
+                document.getElementById('appeal-reason').value = '';
+            }
+        });
+    }
 });
 
-// 15) Инициализация приложения
-function initApp() {
-  updateStatus();
-  updateInterface();
-  setupFormHandler();
-  showPage('home');
-  
-  // Устанавливаем текущую дату
-  setTimeout(() => {
-    const dateInput = document.getElementById('date-input');
-    if (dateInput) {
-      dateInput.value = new Date().toISOString().split('T')[0];
+function submitAppeal(recordId, reason) {
+    // Поиск записи в ОП данных
+    let opData = DataManager.getOPData();
+    let record = opData.find(r => r.id === recordId);
+    let type = 'op';
+    
+    // Если не найдено в ОП, ищем в Продакшн
+    if (!record) {
+        let prodData = DataManager.getProdData();
+        record = prodData.find(r => r.id === recordId);
+        type = 'prod';
     }
-  }, 100);
+    
+    if (record) {
+        record.appeal = {
+            status: 'new',
+            note: reason,
+            createdAt: Date.now()
+        };
+        
+        // Сохранение данных
+        if (type === 'op') {
+            DataManager.saveOPData(opData);
+        } else {
+            DataManager.saveProdData(prodData);
+        }
+        
+        showNotification('✅ Апелляция подана успешно');
+        
+        // Обновление дашборда если он открыт
+        if (currentPage === `${type}-dashboard`) {
+            const data = type === 'op' ? DataManager.getOPData() : DataManager.getProdData();
+            renderDashboard(type, data);
+        }
+    }
 }
 
-// 16) Запуск при загрузке
-document.addEventListener('DOMContentLoaded', initApp);
-
-// Дополнительная инициализация для старых браузеров
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initApp);
-} else {
-  initApp();
+// =====================================================
+// ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ
+// =====================================================
+function clearFilters(type) {
+    const selectors = [
+        `${type}-dash-month`,
+        `${type}-dash-manager`,
+        `${type}-dash-category`
+    ];
+    
+    selectors.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.value = '';
+        }
+    });
+    
+    // Перерендер дашборда
+    const data = type === 'op' ? DataManager.getOPData() : DataManager.getProdData();
+    renderDashboard(type, data);
+    
+    showNotification('🔄 Фильтры очищены');
 }
+
+function exportData(type) {
+    const data = type === 'op' ? DataManager.getOPData() : DataManager.getProdData();
+    const filteredData = applyFilters(type, data);
+    
+    if (filteredData.length === 0) {
+        showNotification('❌ Нет данных для экспорта', 'warning');
+        return;
+    }
+    
+    // Конвертация в CSV
+    const headers = type === 'op' 
+        ? ['Дата', 'Сотрудник', 'Показатель', 'Оценка', 'Месяц', 'Источник']
+        : ['Дата', 'Специалист', 'Роль', 'Показатель', 'Оценка', 'Месяц', 'Источник'];
+    
+    const csvContent = [
+        headers.join(','),
+        ...filteredData.map(record => [
+            record.date,
+            record.manager,
+            ...(type === 'prod' ? [record.category] : []),
+            `"${record.indicator}"`,
+            record.value,
+            record.month,
+            record.source
+        ].join(','))
+    ].join('\n');
+    
+    // Скачивание файла
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${type}_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification(`📁 Экспортировано ${filteredData.length} записей`);
+}
+
+// =====================================================
+// УВЕДОМЛЕНИЯ
+// =====================================================
+function showNotification(message, type = 'success') {
+    const notification = document.getElementById('notification');
+    if (!notification) return;
+    
+    notification.textContent = message;
+    notification.className = `notification show ${type}`;
+    
+    // Скрытие через 3 секунды
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
+    
+    console.log(`📢 Уведомление: ${message}`);
+}
+
+// =====================================================
+// ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ
+// =====================================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ DOM загружен, инициализация приложения');
+    
+    // Закрытие модальных окон по клику вне них
+    window.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal')) {
+            closeModal(e.target.id);
+        }
+    });
+    
+    // Инициализация тестовых данных если их нет
+    if (DataManager.getOPData().length === 0) {
+        DataManager.saveOPData(DataManager.generateTestOPData());
+    }
+    
+    if (DataManager.getProdData().length === 0) {
+        DataManager.saveProdData(DataManager.generateTestProdData());
+    }
+    
+    console.log('🎯 Система управления качеством готова к работе!');
+    showNotification('🚀 Система успешно инициализирована!');
+});
+
+// =====================================================
+// ЭКСПОРТ ГЛОБАЛЬНЫХ ФУНКЦИЙ
+// =====================================================
+window.showPage = showPage;
+window.showHistoryTab = showHistoryTab;
+window.showAppeals = showAppeals;
+window.clearFilters = clearFilters;
+window.exportData = exportData;
+window.closeModal = closeModal;
+window.openAppealModal = openAppealModal;
