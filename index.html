@@ -23,22 +23,179 @@
     <button onclick="showPage('home')">← Главная</button>
     <h2>Админ панель</h2>
     <p id="admin-firebase-status">Firebase статус...</p>
-    <!-- Здесь исходный HTML из admin-panel-smart-3.html -->
-    <!-- Например: файлы, таблицы, кнопки "Добавить запись", "Очистить" -->
-    <div id="manual-panel"></div>
+    
+    <!-- Форма добавления проверочных данных -->
+    <div class="form-section">
+      <h3>Добавить проверочные данные</h3>
+      <form id="quality-form">
+        <div class="form-row">
+          <label>Менеджер:</label>
+          <select id="manager-select" required>
+            <option value="">Выберите менеджера</option>
+            <option value="Иванов">Иванов</option>
+            <option value="Петров">Петров</option>
+            <option value="Сидоров">Сидоров</option>
+            <option value="Козлов">Козлов</option>
+            <option value="Смирнов">Смирнов</option>
+          </select>
+        </div>
+        
+        <div class="form-row">
+          <label>Категория:</label>
+          <select id="category-select" required>
+            <option value="">Выберите категорию</option>
+            <option value="Скорость обслуживания">Скорость обслуживания</option>
+            <option value="Качество продукции">Качество продукции</option>
+            <option value="Клиентский сервис">Клиентский сервис</option>
+            <option value="Соблюдение стандартов">Соблюдение стандартов</option>
+            <option value="Внешний вид">Внешний вид</option>
+          </select>
+        </div>
+        
+        <div class="form-row">
+          <label>Показатель:</label>
+          <select id="indicator-select" required>
+            <option value="">Выберите показатель</option>
+            <option value="Время подачи">Время подачи</option>
+            <option value="Температура блюд">Температура блюд</option>
+            <option value="Вежливость">Вежливость</option>
+            <option value="Чистота">Чистота</option>
+            <option value="Презентация">Презентация</option>
+          </select>
+        </div>
+        
+        <div class="form-row">
+          <label>Значение (%):</label>
+          <input type="number" id="value-input" min="0" max="100" step="0.1" required>
+        </div>
+        
+        <div class="form-row">
+          <label>Дата проверки:</label>
+          <input type="date" id="date-input" required>
+        </div>
+        
+        <div class="form-row">
+          <label>Комментарий:</label>
+          <textarea id="comment-input" rows="3"></textarea>
+        </div>
+        
+        <button type="submit" class="btn-primary">Добавить запись</button>
+        <button type="button" onclick="clearForm()" class="btn-secondary">Очистить форму</button>
+      </form>
+    </div>
+    
+    <!-- Управление данными -->
+    <div class="management-section">
+      <h3>Управление данными</h3>
+      <button onclick="exportData()" class="btn-export">Экспорт в Excel</button>
+      <button onclick="clearAllData()" class="btn-danger">Очистить все данные</button>
+    </div>
+    
+    <!-- Список записей -->
+    <div class="records-section">
+      <h3>Последние записи</h3>
+      <div id="manual-panel"></div>
+    </div>
   </div>
 
   <!-- Дашборд -->
   <div id="dashboard-page" class="page">
     <button onclick="showPage('home')">← Главная</button>
-    <h2>Дашборд</h2>
+    <h2>Дашборд качества</h2>
     <p id="dashboard-firebase-status">Firebase статус...</p>
-    <!-- Здесь исходный HTML из dashboard-op.html -->
-    <canvas id="chartLeaders"></canvas>
-    <canvas id="chartCategories"></canvas>
-    <canvas id="chartTrend"></canvas>
-    <table id="tblWeak"></table>
-    <table id="tblDetail"></table>
+    
+    <!-- Фильтры -->
+    <div class="filters-section">
+      <h3>Фильтры</h3>
+      <div class="filters-row">
+        <div class="filter-group">
+          <label>Период:</label>
+          <select id="period-filter">
+            <option value="all">Весь период</option>
+            <option value="today">Сегодня</option>
+            <option value="week">Последняя неделя</option>
+            <option value="month">Последний месяц</option>
+            <option value="quarter">Последние 3 месяца</option>
+            <option value="custom">Произвольный период</option>
+          </select>
+        </div>
+        
+        <div class="filter-group" id="custom-dates" style="display: none;">
+          <label>С:</label>
+          <input type="date" id="date-from">
+          <label>По:</label>
+          <input type="date" id="date-to">
+        </div>
+        
+        <div class="filter-group">
+          <label>Менеджер:</label>
+          <select id="manager-filter">
+            <option value="all">Все менеджеры</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>Категория:</label>
+          <select id="category-filter">
+            <option value="all">Все категории</option>
+          </select>
+        </div>
+        
+        <button onclick="applyFilters()" class="btn-primary">Применить</button>
+        <button onclick="resetFilters()" class="btn-secondary">Сброс</button>
+      </div>
+    </div>
+    
+    <!-- Общая статистика -->
+    <div class="stats-section">
+      <div class="stat-card">
+        <h4>Всего проверок</h4>
+        <div id="total-checks" class="stat-value">0</div>
+      </div>
+      <div class="stat-card">
+        <h4>Средний балл</h4>
+        <div id="avg-score" class="stat-value">0%</div>
+      </div>
+      <div class="stat-card">
+        <h4>Лучший результат</h4>
+        <div id="best-score" class="stat-value">0%</div>
+      </div>
+      <div class="stat-card">
+        <h4>Худший результат</h4>
+        <div id="worst-score" class="stat-value">0%</div>
+      </div>
+    </div>
+    
+    <!-- Графики -->
+    <div class="charts-section">
+      <div class="chart-container">
+        <h3>Рейтинг менеджеров</h3>
+        <canvas id="chartLeaders"></canvas>
+      </div>
+      
+      <div class="chart-container">
+        <h3>Показатели по категориям</h3>
+        <canvas id="chartCategories"></canvas>
+      </div>
+      
+      <div class="chart-container">
+        <h3>Динамика по дням</h3>
+        <canvas id="chartTrend"></canvas>
+      </div>
+    </div>
+    
+    <!-- Таблицы -->
+    <div class="tables-section">
+      <div class="table-container">
+        <h3>Слабые показатели (< 70%)</h3>
+        <table id="tblWeak" class="data-table"></table>
+      </div>
+      
+      <div class="table-container">
+        <h3>Детальные данные</h3>
+        <table id="tblDetail" class="data-table"></table>
+      </div>
+    </div>
   </div>
 
   <script src="app.js"></script>
