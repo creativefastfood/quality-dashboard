@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Демо - Правильная проверочная панель</title>
+    <link rel="stylesheet" href="style.css?v=2025090203">
+    <style>
+        body {
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🔍 Демо правильной проверочной панели</h1>
+        <p>Вот как должна выглядеть проверочная панель по твоим требованиям:</p>
+        
+        <!-- ОП ПРОВЕРОЧНАЯ ПАНЕЛЬ -->
+        <div class="card">
+            <h3>🔍 Проверочная панель ОП</h3>
+            <form id="op-quality-form" class="quality-check-form-new">
+                <!-- Общие поля -->
+                <div class="general-fields">
+                    <div class="field-row">
+                        <label>Дата:</label>
+                        <input type="date" id="op-check-date" required>
+                    </div>
+                    
+                    <div class="field-row">
+                        <label>Менеджер:</label>
+                        <select id="op-check-manager" required>
+                            <option value="">Выберите менеджера</option>
+                            <option value="Иван Петров">Иван Петров</option>
+                            <option value="Мария Сидорова">Мария Сидорова</option>
+                            <option value="Алексей Козлов">Алексей Козлов</option>
+                            <option value="Елена Романова">Елена Романова</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Показатели ОП -->
+                <div class="indicators-list">
+                    <h4>Показатели ОП:</h4>
+                    
+                    <!-- Работа с КЭВ -->
+                    <div class="indicator-block">
+                        <div class="indicator-header" onclick="toggleDetails('op-kev-details')">
+                            <label class="indicator-switch">
+                                <input type="checkbox" id="op-kev-switch" onchange="toggleIndicator('op', 'kev')">
+                                <span class="switch-slider"></span>
+                            </label>
+                            <span class="indicator-title">Работа с КЭВ</span>
+                        </div>
+                        <div class="indicator-details" id="op-kev-details">
+                            <input type="url" placeholder="Ссылка на сделку" id="op-kev-link">
+                            <input type="text" placeholder="ID сделки" id="op-kev-dealid">
+                            <textarea placeholder="Комментарий (обязательно если переключатель выключен)" id="op-kev-comment"></textarea>
+                            <div class="screenshot-upload-mini">
+                                <input type="file" accept="image/*" id="op-kev-screenshot" style="display: none;">
+                                <button type="button" onclick="document.getElementById('op-kev-screenshot').click()">📎 Скриншот</button>
+                                <div class="screenshot-preview-mini" id="op-kev-preview"></div>
+                            </div>
+                            <div class="validation-error" id="op-kev-error">Комментарий обязателен если переключатель выключен</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Сроки -->
+                    <div class="indicator-block">
+                        <div class="indicator-header" onclick="toggleDetails('op-deadlines-details')">
+                            <label class="indicator-switch">
+                                <input type="checkbox" id="op-deadlines-switch" onchange="toggleIndicator('op', 'deadlines')">
+                                <span class="switch-slider"></span>
+                            </label>
+                            <span class="indicator-title">Сроки</span>
+                        </div>
+                        <div class="indicator-details" id="op-deadlines-details">
+                            <input type="url" placeholder="Ссылка на сделку" id="op-deadlines-link">
+                            <input type="text" placeholder="ID сделки" id="op-deadlines-dealid">
+                            <textarea placeholder="Комментарий (обязательно если переключатель выключен)" id="op-deadlines-comment"></textarea>
+                            <div class="screenshot-upload-mini">
+                                <input type="file" accept="image/*" id="op-deadlines-screenshot" style="display: none;">
+                                <button type="button" onclick="document.getElementById('op-deadlines-screenshot').click()">📎 Скриншот</button>
+                                <div class="screenshot-preview-mini" id="op-deadlines-preview"></div>
+                            </div>
+                            <div class="validation-error" id="op-deadlines-error">Комментарий обязателен если переключатель выключен</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Общение с клиентом -->
+                    <div class="indicator-block">
+                        <div class="indicator-header" onclick="toggleDetails('op-communication-details')">
+                            <label class="indicator-switch">
+                                <input type="checkbox" id="op-communication-switch" onchange="toggleIndicator('op', 'communication')">
+                                <span class="switch-slider"></span>
+                            </label>
+                            <span class="indicator-title">Общение с клиентом</span>
+                        </div>
+                        <div class="indicator-details" id="op-communication-details">
+                            <input type="url" placeholder="Ссылка на сделку" id="op-communication-link">
+                            <input type="text" placeholder="ID сделки" id="op-communication-dealid">
+                            <textarea placeholder="Комментарий (обязательно если переключатель выключен)" id="op-communication-comment"></textarea>
+                            <div class="screenshot-upload-mini">
+                                <input type="file" accept="image/*" id="op-communication-screenshot" style="display: none;">
+                                <button type="button" onclick="document.getElementById('op-communication-screenshot').click()">📎 Скриншот</button>
+                                <div class="screenshot-preview-mini" id="op-communication-preview"></div>
+                            </div>
+                            <div class="validation-error" id="op-communication-error">Комментарий обязателен если переключатель выключен</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Правильность заполнения CRM -->
+                    <div class="indicator-block">
+                        <div class="indicator-header" onclick="toggleDetails('op-crm-details')">
+                            <label class="indicator-switch">
+                                <input type="checkbox" id="op-crm-switch" onchange="toggleIndicator('op', 'crm')">
+                                <span class="switch-slider"></span>
+                            </label>
+                            <span class="indicator-title">Правильность заполнения CRM</span>
+                        </div>
+                        <div class="indicator-details" id="op-crm-details">
+                            <input type="url" placeholder="Ссылка на сделку" id="op-crm-link">
+                            <input type="text" placeholder="ID сделки" id="op-crm-dealid">
+                            <textarea placeholder="Комментарий (обязательно если переключатель выключен)" id="op-crm-comment"></textarea>
+                            <div class="screenshot-upload-mini">
+                                <input type="file" accept="image/*" id="op-crm-screenshot" style="display: none;">
+                                <button type="button" onclick="document.getElementById('op-crm-screenshot').click()">📎 Скриншот</button>
+                                <div class="screenshot-preview-mini" id="op-crm-preview"></div>
+                            </div>
+                            <div class="validation-error" id="op-crm-error">Комментарий обязателен если переключатель выключен</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="quality-actions">
+                    <button type="submit" class="btn-primary">💾 Сохранить проверку</button>
+                    <button type="button" class="btn-secondary" onclick="clearForm()">🗑️ Очистить форму</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Установить текущую дату
+        document.getElementById('op-check-date').value = new Date().toISOString().split('T')[0];
+        
+        // Функция для переключения деталей индикатора
+        function toggleDetails(detailsId) {
+            const details = document.getElementById(detailsId);
+            details.classList.toggle('active');
+        }
+        
+        // Функция для переключения индикатора
+        function toggleIndicator(department, indicator) {
+            const checkbox = document.getElementById(`${department}-${indicator}-switch`);
+            const details = document.getElementById(`${department}-${indicator}-details`);
+            const error = document.getElementById(`${department}-${indicator}-error`);
+            
+            // Показать/скрыть детали
+            if (checkbox.checked || details.classList.contains('active')) {
+                details.classList.add('active');
+            }
+            
+            // Валидация
+            validateIndicator(department, indicator);
+        }
+        
+        // Валидация индикатора
+        function validateIndicator(department, indicator) {
+            const checkbox = document.getElementById(`${department}-${indicator}-switch`);
+            const comment = document.getElementById(`${department}-${indicator}-comment`);
+            const error = document.getElementById(`${department}-${indicator}-error`);
+            const details = document.getElementById(`${department}-${indicator}-details`);
+            
+            if (!checkbox.checked && !comment.value.trim()) {
+                details.classList.add('invalid');
+                error.classList.add('show');
+                return false;
+            } else {
+                details.classList.remove('invalid');
+                error.classList.remove('show');
+                return true;
+            }
+        }
+        
+        // Обработка загрузки скриншота
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'file' && e.target.accept === 'image/*') {
+                const file = e.target.files[0];
+                if (file) {
+                    const previewId = e.target.id.replace('-screenshot', '-preview');
+                    const preview = document.getElementById(previewId);
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        preview.innerHTML = `
+                            <img src="${event.target.result}" alt="Превью">
+                            <button type="button" class="remove-btn" onclick="removeScreenshot('${previewId}', '${e.target.id}')">&times;</button>
+                        `;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+        
+        // Удаление скриншота
+        function removeScreenshot(previewId, inputId) {
+            document.getElementById(previewId).innerHTML = '';
+            document.getElementById(inputId).value = '';
+        }
+        
+        // Очистка формы
+        function clearForm() {
+            document.getElementById('op-quality-form').reset();
+            document.querySelectorAll('.indicator-details').forEach(detail => {
+                detail.classList.remove('active', 'invalid');
+            });
+            document.querySelectorAll('.validation-error').forEach(error => {
+                error.classList.remove('show');
+            });
+            document.querySelectorAll('.screenshot-preview-mini').forEach(preview => {
+                preview.innerHTML = '';
+            });
+        }
+        
+        // Обработка отправки формы
+        document.getElementById('op-quality-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            let isValid = true;
+            const indicators = ['kev', 'deadlines', 'communication', 'crm'];
+            
+            indicators.forEach(indicator => {
+                if (!validateIndicator('op', indicator)) {
+                    isValid = false;
+                }
+            });
+            
+            if (isValid) {
+                alert('✅ Проверка сохранена успешно!');
+                // Здесь был бы код для сохранения данных
+            } else {
+                alert('❌ Пожалуйста, заполните обязательные поля с комментариями');
+            }
+        });
+        
+        // Валидация при вводе комментария
+        document.addEventListener('input', function(e) {
+            if (e.target.tagName === 'TEXTAREA') {
+                const parts = e.target.id.split('-');
+                if (parts.length >= 3) {
+                    const department = parts[0];
+                    const indicator = parts[1];
+                    validateIndicator(department, indicator);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
