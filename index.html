@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система управления качеством</title>
-    <link rel="stylesheet" href="style.css?v=2025090202">
+    <link rel="stylesheet" href="style.css?v=2025090203">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="app.js?v=2025090202" defer></script>
+    <script src="app.js?v=2025090203" defer></script>
 </head>
 <body>
     <!-- ГЛАВНАЯ СТРАНИЦА -->
@@ -459,6 +459,146 @@
                                     </div>
                                     <input type="hidden" id="prod-prepayment" name="prepayment">
                                 </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Используется правильный шаблон письма:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'template', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'template', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'template')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-template" name="template">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Есть подпись с ФИО, должностью и контактами:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'signature', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'signature', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'signature')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-signature" name="signature">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Письмо начинается с приветствия по имени клиента:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'greeting', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'greeting', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'greeting')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-greeting" name="greeting">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Письмо содержит четкий план работ:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'plan', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'plan', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'plan')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-plan" name="plan">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Указаны конкретные сроки выполнения:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'deadlines', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'deadlines', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'deadlines')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-deadlines" name="deadlines">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Письмо содержит информацию о следующих шагах:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'nextsteps', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'nextsteps', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'nextsteps')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-nextsteps" name="nextsteps">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Используется профессиональный тон общения:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'tone', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'tone', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'tone')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-tone" name="tone">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Отсутствуют грамматические и орфографические ошибки:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'grammar', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'grammar', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'grammar')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-grammar" name="grammar">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Письмо структурировано и легко читается:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'structure', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'structure', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'structure')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-structure" name="structure">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Прикреплены необходимые файлы или ссылки:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'attachments', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'attachments', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'attachments')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-attachments" name="attachments">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Есть призыв к действию от клиента:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'cta', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'cta', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'cta')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-cta" name="cta">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Письмо не содержит избыточной информации:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'concise', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'concise', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'concise')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-concise" name="concise">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Соблюдены корпоративные стандарты оформления:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'corporate', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'corporate', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'corporate')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-corporate" name="corporate">
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <label>Указана контактная информация для обратной связи:</label>
+                                    <div class="indicator-buttons">
+                                        <button type="button" class="indicator-btn good" onclick="setIndicator('prod', 'contact', 'good')">✓</button>
+                                        <button type="button" class="indicator-btn bad" onclick="setIndicator('prod', 'contact', 'bad')">✗</button>
+                                        <button type="button" class="indicator-btn clear" onclick="clearIndicator('prod', 'contact')">Очистить</button>
+                                    </div>
+                                    <input type="hidden" id="prod-contact" name="contact">
+                                </div>
                             </div>
                         </div>
                         
@@ -479,13 +619,8 @@
                                     <th>Дата</th>
                                     <th>Специалист</th>
                                     <th>Отдел</th>
-                                    <th>Стадия</th>
-                                    <th>ТЗ</th>
-                                    <th>Исполнители</th>
-                                    <th>Комментарии</th>
-                                    <th>В работе</th>
-                                    <th>Поля</th>
-                                    <th>Предоплата</th>
+                                    <th>Комментарий</th>
+                                    <th>Показатели</th>
                                     <th>Действия</th>
                                 </tr>
                             </thead>

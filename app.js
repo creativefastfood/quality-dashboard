@@ -1442,20 +1442,23 @@ function renderQualityResults(department) {
                 </td>
             `;
         } else {
+            // Считаем общее количество индикаторов и сколько положительных
+            const indicators = record.indicators || {};
+            const totalIndicators = Object.keys(indicators).length;
+            const goodIndicators = Object.values(indicators).filter(val => val === 'good').length;
+            const badIndicators = Object.values(indicators).filter(val => val === 'bad').length;
+            const indicatorsSummary = `${goodIndicators}✓ ${badIndicators}✗ из ${totalIndicators}`;
+            
             row.innerHTML = `
                 <td>${record.date}</td>
                 <td>${record.manager || '-'}</td>
                 <td>${record.department}</td>
-                <td>${renderIndicatorBadge(record.indicators?.stage)}</td>
-                <td>${renderIndicatorBadge(record.indicators?.tz)}</td>
-                <td>${renderIndicatorBadge(record.indicators?.executors)}</td>
-                <td>${renderIndicatorBadge(record.indicators?.comments)}</td>
-                <td>${renderIndicatorBadge(record.indicators?.inwork)}</td>
-                <td>${renderIndicatorBadge(record.indicators?.fields)}</td>
-                <td>${renderIndicatorBadge(record.indicators?.prepayment)}</td>
+                <td>${record.comment || '-'}</td>
+                <td>${indicatorsSummary}</td>
                 <td>
                     ${record.dealLink ? `<a href="${record.dealLink}" target="_blank">🔗</a>` : ''}
                     ${record.screenshot ? `<span onclick="showScreenshot('${record.screenshot}')" style="cursor: pointer;">📸</span>` : ''}
+                    <button onclick="showDetailedResults('${department}', ${record.id})" class="btn-secondary btn-sm" title="Подробности">👁️</button>
                     <button onclick="deleteQualityRecord('${department}', ${record.id})" class="btn-danger btn-sm">🗑️</button>
                 </td>
             `;
@@ -1497,6 +1500,78 @@ window.showScreenshot = function(dataUrl) {
     document.body.appendChild(modal);
     
     // Закрытие по клику вне изображения
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+};
+
+window.showDetailedResults = function(department, recordId) {
+    const storageKey = `${department}QualityChecks`;
+    const data = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    const record = data.find(r => r.id === recordId);
+    
+    if (!record) return;
+    
+    const indicators = record.indicators || {};
+    let detailsHtml = '<h4>Детальные результаты проверки:</h4><ul>';
+    
+    // Список всех возможных индикаторов для Продакшн
+    const indicatorLabels = {
+        stage: 'Актуальность стадии проекта по канбану',
+        tz: 'ТЗ прикреплено в сделку файлом в Битрикс',
+        executors: 'Верно добавлены все исполнители в сделку',
+        comments: 'Комментарии в сделке о прохождении этапов',
+        inwork: 'По сделке видно, что она находится в работе',
+        fields: 'Заполнены все обязательные поля в Битрикс',
+        prepayment: 'В сделке есть предоплата',
+        template: 'Используется правильный шаблон письма',
+        signature: 'Есть подпись с ФИО, должностью и контактами',
+        greeting: 'Письмо начинается с приветствия по имени клиента',
+        plan: 'Письмо содержит четкий план работ',
+        deadlines: 'Указаны конкретные сроки выполнения',
+        nextsteps: 'Письмо содержит информацию о следующих шагах',
+        tone: 'Используется профессиональный тон общения',
+        grammar: 'Отсутствуют грамматические и орфографические ошибки',
+        structure: 'Письмо структурировано и легко читается',
+        attachments: 'Прикреплены необходимые файлы или ссылки',
+        cta: 'Есть призыв к действию от клиента',
+        concise: 'Письмо не содержит избыточной информации',
+        corporate: 'Соблюдены корпоративные стандарты оформления',
+        contact: 'Указана контактная информация для обратной связи'
+    };
+    
+    // Показываем все индикаторы с их статусами
+    Object.entries(indicatorLabels).forEach(([key, label]) => {
+        const value = indicators[key];
+        let icon = '⚪'; // не проверено
+        if (value === 'good') icon = '✅';
+        else if (value === 'bad') icon = '❌';
+        
+        detailsHtml += `<li>${icon} ${label}</li>`;
+    });
+    
+    detailsHtml += '</ul>';
+    
+    if (record.comment) {
+        detailsHtml += `<h4>Комментарий:</h4><p>${record.comment}</p>`;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            <h3>Проверка от ${record.date}</h3>
+            <p><strong>Специалист:</strong> ${record.manager}</p>
+            <p><strong>Отдел:</strong> ${record.department}</p>
+            ${detailsHtml}
+            ${record.dealLink ? `<p><strong>Ссылка на сделку:</strong> <a href="${record.dealLink}" target="_blank">${record.dealLink}</a></p>` : ''}
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Закрытие по клику вне модального окна
     modal.addEventListener('click', (e) => {
         if (e.target === modal) modal.remove();
     });
