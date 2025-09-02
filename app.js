@@ -1,12 +1,12 @@
-// 1) Конфигурация Firebase (вставьте свои данные)
+// 1) Конфигурация Firebase
 const firebaseConfig = {
-  apiKey: "ВАШ_API_KEY",
-  authDomain: "ВАШ_ПРОЕКТ.firebaseapp.com",
-  databaseURL: "https://ВАШ_ПРОЕКТ.firebaseio.com",
-  projectId: "ВАШ_ПРОЕКТ",
-  storageBucket: "ВАШ_ПРОЕКТ.appspot.com",
-  messagingSenderId: "ВАШ_SENDER_ID",
-  appId: "ВАШ_APP_ID"
+  apiKey: "AIzaSyDxQ8K7GFzjKl9mNq3YvCp2XrW5_HgT8Ac",
+  authDomain: "quality-dashboard-cf.firebaseapp.com",
+  databaseURL: "https://quality-dashboard-cf-default-rtdb.firebaseio.com",
+  projectId: "quality-dashboard-cf",
+  storageBucket: "quality-dashboard-cf.appspot.com",
+  messagingSenderId: "456789123456",
+  appId: "1:456789123456:web:a1b2c3d4e5f6789012"
 };
 
 // 2) Инициализация
