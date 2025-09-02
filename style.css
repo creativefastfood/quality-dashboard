@@ -1351,8 +1351,8 @@ tr:hover {
 
 .indicator-row {
     display: grid;
-    grid-template-columns: auto 1fr auto auto auto auto auto;
-    gap: 15px;
+    grid-template-columns: 40px 1fr 100px 150px 100px 120px 180px;
+    gap: 10px;
     align-items: center;
     padding: 12px;
     background: #fafafa;
@@ -1494,8 +1494,20 @@ tr:hover {
     
     .indicator-row {
         grid-template-columns: 1fr;
-        gap: 10px;
+        gap: 8px;
         text-align: left;
+        padding: 8px;
+    }
+    
+    .indicator-row .indicator-text {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .indicator-row input,
+    .indicator-row button {
+        width: 100%;
+        margin: 2px 0;
     }
     
     .btn-group {

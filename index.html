@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система управления качеством</title>
-    <link rel="stylesheet" href="style.css?v=2025090204">
+    <link rel="stylesheet" href="style.css?v=2025090205">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="app.js?v=2025090204" defer></script>
+    <script src="app.js?v=2025090205" defer></script>
 </head>
 <body>
     <!-- ГЛАВНАЯ СТРАНИЦА -->
@@ -970,10 +970,13 @@
             }, 3000);
         }
 
-        // Простая функция навигации для демо
+        // Функция навигации с сохранением текущей страницы
         function showPage(pageId) {
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             document.getElementById(pageId + '-page').classList.add('active');
+            
+            // Сохраняем текущую страницу в localStorage
+            localStorage.setItem('currentPage', pageId);
             
             // Загружаем данные при переходе на админ страницы
             if (pageId === 'op-admin') {
@@ -998,6 +1001,19 @@
             if (prodDate) prodDate.value = today;
             if (opMonth) opMonth.value = currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1);
             if (prodMonth) prodMonth.value = currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1);
+            
+            // Восстанавливаем последнюю открытую страницу
+            const savedPage = localStorage.getItem('currentPage');
+            if (savedPage && savedPage !== 'home') {
+                // Проверяем что элемент существует перед показом
+                const pageElement = document.getElementById(savedPage + '-page');
+                if (pageElement) {
+                    showPage(savedPage);
+                } else {
+                    // Если страница не найдена, показываем главную
+                    showPage('home');
+                }
+            }
         });
     </script>
 </body>
